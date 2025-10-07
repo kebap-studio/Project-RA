@@ -5,3 +5,6 @@
 *.wav filter=lfs diff=lfs merge=lfs -text
 *.mp4 filter=lfs diff=lfs merge=lfs -text
 *.unitypackage filter=lfs diff=lfs merge=lfs -text
+*.meta linguist-generated=true
+*.asset linguist-generated=true
+*.prefab linguist-generated=true
