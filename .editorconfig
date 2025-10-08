@@ -1,0 +1,10 @@
+# .editorconfig (UTF-8, without BOM)
+root = true
+
+[*.cs]
+# 각 어트리뷰트는 별도 줄에 배치
+resharper_csharp_formatting_place_attributes_on_separate_lines = true
+# 단일 어트리뷰트는 선언부와 같은 줄에 유지
+resharper_csharp_formatting_keep_attribute_on_same_line_as_declaration_if_single = true
+# 인접한 어트리뷰트 리스트 병합 금지
+resharper_csharp_formatting_merge_consecutive_attribute_lists = false
