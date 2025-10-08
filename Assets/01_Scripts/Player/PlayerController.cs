@@ -20,7 +20,6 @@ public class PlayerController : MonoBehaviour
 
     // input
     private Vector2 _moveInput;
-    private bool _isSprinting;
 
     // Movement
     private Vector3 _moveDirection;
@@ -52,7 +51,7 @@ public class PlayerController : MonoBehaviour
         // 입력을 3D 월드 좌표로 변환 (2.5D 탑다운)
         _moveDirection = new Vector3(_moveInput.x, 0f, _moveInput.y).normalized;
 
-        float currentSpeed = _isSprinting ? moveSpeed * sprintMultiplier : moveSpeed;
+        float currentSpeed = moveSpeed;
 
         _velocity = _moveDirection * currentSpeed;
         _characterController.Move(_velocity * Time.deltaTime);
@@ -87,16 +86,7 @@ public class PlayerController : MonoBehaviour
             Debug.Log($"Move Input: {_moveInput}");
     }
 
-    public void OnSprint(InputValue value)
-    {
-        _isSprinting = value.isPressed;
-
-        if (showDebugInfo)
-            Debug.Log($"Sprint Input: {_isSprinting}");
-    }
-
     // 외부에서 호출 가능한 메서드들
     public Vector3 GetVelocity() => _velocity;
     public bool IsMoving() => _velocity.magnitude > 0.1f;
-    public bool IsSprinting() => _isSprinting;
 }
