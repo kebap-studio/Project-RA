@@ -15,9 +15,18 @@ public class MainMenuUI : MonoBehaviour
     [SerializeField] private CanvasGroup menuCanvasGroup;
     [SerializeField] private float fadeInDuration = 1.5f;
     [SerializeField] private float fadeOutDuration = 0.8f;
+    
+    
+    private bool isTransitioning = false; // Start Button 클릭 시 애니메이션 동안 true
 
     private void Start()
     {
+        if (menuCanvasGroup == null)
+        {
+            Debug.LogError("MenuCanvasGroup이 할당되지 않았습니다.");
+            return;
+        }
+        
         SetupButtons();
         StartCoroutine(FadeInMenu()); // 메뉴가 부드럽게 나타나기
     }
@@ -31,6 +40,17 @@ public class MainMenuUI : MonoBehaviour
             exitButton.onClick.AddListener(OnExitGameClicked);
     }
 
+    private void OnDestroy()
+    {
+        if (startButton != null)
+            startButton.onClick.RemoveListener(OnStartGameClicked);
+        if (exitButton != null)
+            exitButton.onClick.RemoveListener(OnExitGameClicked);
+    
+        // 코루틴 정리
+        StopAllCoroutines();
+    }
+    
     private IEnumerator FadeInMenu()
     {
         // 버튼 비활성화 (애니메이션 중 클릭 방지)
@@ -82,6 +102,11 @@ public class MainMenuUI : MonoBehaviour
 
     private void OnStartGameClicked()
     {
+        if (isTransitioning) return;
+            
+        isTransitioning = true;
+        SetButtonsInteractable(false); // 모든 버튼 비활성화
+        
         StartCoroutine(FadeOutMenu(() => { SceneLoader.LoadScene(gameSceneName); }));
     }
 

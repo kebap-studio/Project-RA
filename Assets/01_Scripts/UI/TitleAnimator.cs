@@ -28,6 +28,7 @@ public class TitleAnimator : MonoBehaviour
     private TextMeshProUGUI titleTextComponent;
     private CanvasGroup canvasGroup;
     private Vector3 originalScale;
+    private Coroutine blinkCoroutine;
 
     public enum AnimationType
     {
@@ -49,7 +50,15 @@ public class TitleAnimator : MonoBehaviour
     
     private void Start()
     {
-        StartCoroutine(AnimateTitle());
+        if (blinkCoroutine != null)
+            StopCoroutine(blinkCoroutine);
+        blinkCoroutine = StartCoroutine(AnimateTitle());
+    }
+    
+    private void OnDestroy()
+    {
+        if (blinkCoroutine != null)
+            StopCoroutine(blinkCoroutine);
     }
 
     private IEnumerator AnimateTitle()
