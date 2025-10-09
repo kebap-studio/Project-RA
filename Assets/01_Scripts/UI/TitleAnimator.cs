@@ -25,10 +25,10 @@ public class TitleAnimator : MonoBehaviour
     [SerializeField] private float scaleAnimationDuration = 1.5f;
     [SerializeField] private AnimationCurve scaleCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
-    private TextMeshProUGUI titleTextComponent;
-    private CanvasGroup canvasGroup;
-    private Vector3 originalScale;
-    private Coroutine blinkCoroutine;
+    private TextMeshProUGUI _titleTextComponent;
+    private CanvasGroup _canvasGroup;
+    private Vector3 _originalScale;
+    private Coroutine _blinkCoroutine;
 
     public enum AnimationType
     {
@@ -40,25 +40,29 @@ public class TitleAnimator : MonoBehaviour
 
     private void Awake()
     {
-        titleTextComponent = GetComponent<TextMeshProUGUI>(); 
-        canvasGroup = GetComponent<CanvasGroup>();
-        if (canvasGroup == null)
-            canvasGroup = gameObject.AddComponent<CanvasGroup>();
+        _titleTextComponent = GetComponent<TextMeshProUGUI>(); 
+        _canvasGroup = GetComponent<CanvasGroup>();
+        if (_canvasGroup == null)
+            _canvasGroup = gameObject.AddComponent<CanvasGroup>();
             
-        originalScale = transform.localScale;
+        _originalScale = transform.localScale;
+        
+        
+        _titleTextComponent.text = titleText + (showCursor ? cursorChar : "");
+        _titleTextComponent.maxVisibleCharacters = 0;
     }
     
     private void Start()
     {
-        if (blinkCoroutine != null)
-            StopCoroutine(blinkCoroutine);
-        blinkCoroutine = StartCoroutine(AnimateTitle());
+        if (_blinkCoroutine != null)
+            StopCoroutine(_blinkCoroutine);
+        _blinkCoroutine = StartCoroutine(AnimateTitle());
     }
     
     private void OnDestroy()
     {
-        if (blinkCoroutine != null)
-            StopCoroutine(blinkCoroutine);
+        if (_blinkCoroutine != null)
+            StopCoroutine(_blinkCoroutine);
     }
 
     private IEnumerator AnimateTitle()
@@ -84,58 +88,57 @@ public class TitleAnimator : MonoBehaviour
 
     private IEnumerator TypeWriterAnimation()
     {
-        titleTextComponent.text = "";
-        canvasGroup.alpha = 1f;
+        _canvasGroup.alpha = 1f;
 
         // 타이핑 애니메이션
         for (int i = 0; i <= titleText.Length; i++)
         {
-            titleTextComponent.text = titleText.Substring(0, i);
-            if (showCursor && i < titleText.Length)
-                titleTextComponent.text += cursorChar;
-            
+            _titleTextComponent.maxVisibleCharacters = i;
             yield return new WaitForSeconds(typingSpeed);
         }
 
         // 커서 깜빡임
         if (showCursor)
-        {
             StartCoroutine(BlinkCursor());
-        }
     }
 
     private IEnumerator BlinkCursor()
     {
+        int textLength = titleText.Length;
+        int fullLength = titleText.Length + (showCursor ? 1 : 0);
+    
         while (true)
         {
-            titleTextComponent.text = titleText + cursorChar;
+            // 커서 숨기기: 텍스트만 보이게
+            _titleTextComponent.maxVisibleCharacters = textLength;
             yield return new WaitForSeconds(cursorBlinkRate);
-            
-            titleTextComponent.text = titleText;
+        
+            // 커서 보이기: 텍스트 + 커서
+            _titleTextComponent.maxVisibleCharacters = fullLength;
             yield return new WaitForSeconds(cursorBlinkRate);
         }
     }
 
     private IEnumerator FadeInAnimation()
     {
-        titleTextComponent.text = titleText;
-        canvasGroup.alpha = 0f;
+        _titleTextComponent.text = titleText;
+        _canvasGroup.alpha = 0f;
 
         float elapsed = 0f;
         while (elapsed < fadeInDuration)
         {
             elapsed += Time.deltaTime;
-            canvasGroup.alpha = Mathf.Lerp(0f, 1f, elapsed / fadeInDuration);
+            _canvasGroup.alpha = Mathf.Lerp(0f, 1f, elapsed / fadeInDuration);
             yield return null;
         }
 
-        canvasGroup.alpha = 1f;
+        _canvasGroup.alpha = 1f;
     }
 
     private IEnumerator ScaleUpAnimation()
     {
-        titleTextComponent.text = titleText;
-        canvasGroup.alpha = 1f;
+        _titleTextComponent.text = titleText;
+        _canvasGroup.alpha = 1f;
         transform.localScale = Vector3.zero;
 
         float elapsed = 0f;
@@ -145,17 +148,17 @@ public class TitleAnimator : MonoBehaviour
             float progress = elapsed / scaleAnimationDuration;
             float curveValue = scaleCurve.Evaluate(progress);
             
-            transform.localScale = Vector3.Lerp(Vector3.zero, originalScale, curveValue);
+            transform.localScale = Vector3.Lerp(Vector3.zero, _originalScale, curveValue);
             yield return null;
         }
 
-        transform.localScale = originalScale;
+        transform.localScale = _originalScale;
     }
 
     private IEnumerator FadeAndScaleAnimation()
     {
-        titleTextComponent.text = titleText;
-        canvasGroup.alpha = 0f;
+        _titleTextComponent.text = titleText;
+        _canvasGroup.alpha = 0f;
         transform.localScale = Vector3.zero;
 
         float elapsed = 0f;
@@ -164,12 +167,12 @@ public class TitleAnimator : MonoBehaviour
             elapsed += Time.deltaTime;
             float progress = elapsed / fadeInDuration;
             
-            canvasGroup.alpha = Mathf.Lerp(0f, 1f, progress);
-            transform.localScale = Vector3.Lerp(Vector3.zero, originalScale, scaleCurve.Evaluate(progress));
+            _canvasGroup.alpha = Mathf.Lerp(0f, 1f, progress);
+            transform.localScale = Vector3.Lerp(Vector3.zero, _originalScale, scaleCurve.Evaluate(progress));
             yield return null;
         }
 
-        canvasGroup.alpha = 1f;
-        transform.localScale = originalScale;
+        _canvasGroup.alpha = 1f;
+        transform.localScale = _originalScale;
     }
 }

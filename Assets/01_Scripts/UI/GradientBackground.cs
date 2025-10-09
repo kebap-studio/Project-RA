@@ -10,11 +10,11 @@ public class GradientBackground : MonoBehaviour
     [SerializeField] private Color bottomColor = new Color(0.05f, 0.05f, 0.05f, 1f);
     [SerializeField] private int textureHeight = 512;
 
-    private Image backgroundImage;
+    private Image _backgroundImage;
 
     private void Start()
     {
-        backgroundImage = GetComponent<Image>();
+        _backgroundImage = GetComponent<Image>();
         CreateGradientTexture();
     }
 
@@ -36,6 +36,6 @@ public class GradientBackground : MonoBehaviour
             new Rect(0, 0, gradientTexture.width, gradientTexture.height),
             new Vector2(0.5f, 0.5f));
 
-        backgroundImage.sprite = gradientSprite;
+        _backgroundImage.sprite = gradientSprite;
     }
 }
