@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement Settings")]
-    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float moveSpeed = 2f;
     [SerializeField] private float sprintMultiplier = 1.5f;
 
     [Header("Rotation Settings")]
@@ -25,10 +25,18 @@ public class PlayerController : MonoBehaviour
     private Vector3 _moveDirection;
     private Vector3 _velocity;
 
+    private bool _isMoving = false;
+    private bool _wasMoving = false;
+
     private void Awake()
     {
         _characterController = GetComponent<CharacterController>();
         _animator = GetComponent<Animator>();
+
+        if (_animator == null)
+        {
+            Debug.LogError("Animator component not found on " + gameObject.name);
+        }
 
         var playerInput = GetComponent<PlayerInput>();
         if (playerInput != null)
@@ -39,6 +47,7 @@ public class PlayerController : MonoBehaviour
     {
         HandleMovement();
         HandleRotation();
+        UpdateAnimations();
 
         if (showDebugInfo)
         {
@@ -48,8 +57,8 @@ public class PlayerController : MonoBehaviour
 
     private void HandleMovement()
     {
-        // 입력을 3D 월드 좌표로 변환 (2.5D 탑다운)
-        _moveDirection = new Vector3(_moveInput.x, 0f, _moveInput.y).normalized;
+        Vector2 normalizedInput = _moveInput.normalized;
+        _moveDirection = new Vector3(normalizedInput.x, 0f, normalizedInput.y);
 
         float currentSpeed = moveSpeed;
 
@@ -77,8 +86,26 @@ public class PlayerController : MonoBehaviour
         Debug.DrawRay(transform.position, transform.forward * 2f, Color.blue);
     }
 
+    private void UpdateAnimations()
+    {
+        if (_animator == null) return;
+
+        _isMoving = IsMoving();
+
+        if (_isMoving != _wasMoving)
+        {
+            _animator.SetBool("IsMoving", _isMoving);
+            _wasMoving = _isMoving;
+
+            if (showDebugInfo)
+            {
+                Debug.Log($"Movement State: {(_isMoving ? "Moving" : "Idle")}");
+            }
+        }
+    }
+
     // Input System Events
-    void OnMove(InputValue value) // 함수명이 액션과 일치해야 함
+    void OnMove(InputValue value) 
     {
         _moveInput = value.Get<Vector2>();
 
