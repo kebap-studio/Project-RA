@@ -7,6 +7,7 @@ public class MainMenuUI : MonoBehaviour
     [Header("Menu Buttons")]
     [SerializeField] private Button startButton;
     [SerializeField] private Button continueButton;
+    [SerializeField] private Button settingButton;
     [SerializeField] private Button exitButton;
 
     [Header("Game Settings")]
@@ -40,6 +41,8 @@ public class MainMenuUI : MonoBehaviour
         if (continueButton != null)
             continueButton.onClick.AddListener(OnContinueGameClicked);
 
+        // if (settingButton != null)
+
         if (exitButton != null)
             exitButton.onClick.AddListener(OnExitGameClicked);
     }
@@ -48,8 +51,12 @@ public class MainMenuUI : MonoBehaviour
     {
         if (startButton != null)
             startButton.onClick.RemoveListener(OnStartGameClicked);
+
         if (continueButton != null)
             continueButton.onClick.RemoveListener(OnContinueGameClicked);
+
+        // if (settingButton != null)
+
         if (exitButton != null)
             exitButton.onClick.RemoveListener(OnExitGameClicked);
 
@@ -59,10 +66,7 @@ public class MainMenuUI : MonoBehaviour
 
     private IEnumerator FadeInButtons()
     {
-        // 버튼 비활성화 (애니메이션 중 클릭 방지)
         SetButtonsInteractable(false);
-
-        // 초기 투명도 0
         buttonsCanvasGroup.alpha = 0f;
 
         float elapsed = 0f;
@@ -135,8 +139,13 @@ public class MainMenuUI : MonoBehaviour
     {
         if (startButton != null)
             startButton.interactable = interactable;
+
         if (continueButton != null)
             continueButton.interactable = interactable;
+
+        if (settingButton != null)
+            settingButton.interactable = interactable;
+
         if (exitButton != null)
             exitButton.interactable = interactable;
     }
