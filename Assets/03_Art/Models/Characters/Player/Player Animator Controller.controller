@@ -56,7 +56,7 @@ AnimatorController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Y Bot Animator Controller
+  m_Name: Player Animator Controller
   serializedVersion: 5
   m_AnimatorParameters:
   - m_Name: IsMoving
@@ -99,7 +99,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -203655887218126122, guid: b0f5b27249bcf6248b00620d2388baef, type: 3}
+  m_Motion: {fileID: -2462878510073073264, guid: c014e0cb639f6b54aaf374b5fbc5dcf6, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -126,7 +126,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -203655887218126122, guid: 8dc7ff7317ecc4142bd73244f9171386, type: 3}
+  m_Motion: {fileID: -1756174544175713810, guid: 090171e01fb114245ad8814903b468eb, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
