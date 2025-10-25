@@ -6,7 +6,7 @@ public class CameraController : MonoBehaviour
     [SerializeField] private float fieldOfView = 60f;
 
     [Header("Follow Settings")]
-    [SerializeField] private Vector3 offset = new Vector3(0f, 20f, -16f);
+    [SerializeField] private Vector3 offset = new Vector3(0f, 10f, -8f);
     [SerializeField] private Transform target;
 
     [Header("Smooth Follow")]
