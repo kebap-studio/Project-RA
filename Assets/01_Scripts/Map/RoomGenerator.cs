@@ -113,4 +113,14 @@ public class RoomGenerator : MonoBehaviour
         Debug.Log("[RoomGenerator] Deleted all rooms");
     }
 
+    public List<Transform> GetAllRooms()
+    {
+        return new List<Transform>(_rooms);
+    }
+    public Transform GetLastGeneratedRoom()
+    {
+        if (_rooms.Count > 0)
+            return _rooms[_rooms.Count - 1];
+        return null;
+    }
 }
