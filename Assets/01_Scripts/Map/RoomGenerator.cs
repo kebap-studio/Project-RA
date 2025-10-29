@@ -34,7 +34,7 @@ public class RoomGenerator : MonoBehaviour
         }
 
         // Generate room object
-        Vector3 GenPos = transform.position + originPos;
+        Vector3 GenPos = originPos - new Vector3(roomWidth * 0.5f * tileSize, 0f, roomHeight * 0.5f * tileSize);
         string roomName = $"Room{_rooms.Count + 1}";
         Transform room = new GameObject(roomName).transform;
         room.SetParent(null, true);
@@ -64,7 +64,7 @@ public class RoomGenerator : MonoBehaviour
 
         // add room at RoomList
         _rooms.Add(room);
-        Debug.Log($"[RoomGenerator] Generated: {roomName} @ {GenPos}");
+        Debug.Log($"[RoomGenerator] Generated: {roomName} @ center: {originPos}, start: {GenPos}");
     }
 
     [ContextMenu("Delete Last")]
@@ -117,6 +117,7 @@ public class RoomGenerator : MonoBehaviour
     {
         return new List<Transform>(_rooms);
     }
+
     public Transform GetLastGeneratedRoom()
     {
         if (_rooms.Count > 0)
