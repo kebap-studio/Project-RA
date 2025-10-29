@@ -1,5 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Numerics;
 using UnityEngine;
+using Quaternion = UnityEngine.Quaternion;
+using Vector2 = UnityEngine.Vector2;
+using Vector3 = UnityEngine.Vector3;
 
 public enum CellType
 {
@@ -18,7 +22,7 @@ public class CellularAutomataDungeon : MonoBehaviour
 
     [Header("Cellular Automata Settings")]
     [Range(0f, 1f)]
-    public float initialWallProbability = 0.38f; 
+    public float initialWallProbability = 0.38f;
     public int smoothingIterations = 10;
     public int wallThreshold = 4;
 
@@ -195,7 +199,7 @@ public class CellularAutomataDungeon : MonoBehaviour
                     wallCount++;
             }
         }
-        
+
         return wallCount;
     }
 
@@ -214,16 +218,152 @@ public class CellularAutomataDungeon : MonoBehaviour
 
         return count;
     }
-    
+
     private void ProcessCaveRegions()
     {
-        // TODO
+        if (showDebugInfo) Debug.Log("Processing Cave Regions");
+
+        caveRegions = new List<List<Vector2Int>>();
+        bool[,] visited = new bool[dungeonWidth, dungeonHeight];
+
+        for (int x = 0; x < dungeonWidth; x++)
+        {
+            for (int y = 0; y < dungeonHeight; y++)
+            {
+                if (dungeonGrid[x, y] == CellType.Floor && !visited[x, y])
+                {
+                    List<Vector2Int> region = FloodFillRegion(x, y, visited);
+
+                    if (region.Count < minCaveSize)
+                    {
+                        foreach (Vector2Int cell in region)
+                        {
+                            dungeonGrid[cell.x, cell.y] = CellType.Wall;
+                        }
+
+                        if (showDebugInfo) Debug.Log($"Removed small region of size {region.Count}");
+                    }
+                    else
+                    {
+                        caveRegions.Add(region);
+                        if (showDebugInfo) Debug.Log($"Found valid region of size {region.Count}");
+                    }
+                }
+            }
+        }
+
+        if (showDebugInfo) Debug.Log($"Total valid cave regions: {caveRegions.Count}");
+
+        if (connectDisconnectedAreas && caveRegions.Count > 1) ConnectCaveRegions();
+    }
+
+    private List<Vector2Int> FloodFillRegion(int startX, int startY, bool[,] visited)
+    {
+        List<Vector2Int> region = new List<Vector2Int>();
+        Queue<Vector2Int> queue = new Queue<Vector2Int>();
+        queue.Enqueue(new Vector2Int(startX, startY));
+        visited[startX, startY] = true;
+
+        while (queue.Count > 0)
+        {
+            Vector2Int current = queue.Dequeue();
+            region.Add(current);
+
+            Vector2Int[] directions = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right, };
+
+            foreach (Vector2Int dir in directions)
+            {
+                int newX = current.x + dir.x;
+                int newY = current.y + dir.y;
+
+                if (IsValidPosition(newX, newY) && !visited[newX, newY] && dungeonGrid[newX, newY] == CellType.Floor)
+                {
+                    visited[newX, newY] = true;
+                    queue.Enqueue(new Vector2Int(newX, newY));
+                }
+            }
+        }
+        return region;
+    }
+
+    private void ConnectCaveRegions()
+    {
+        if (showDebugInfo) Debug.Log("Connecting cave regions with tunnels");
+
+        List<Vector2Int> mainRegion = GetLargestRegion();
+
+        for (int i = 0; i < caveRegions.Count; i++)
+        {
+            if (caveRegions[i] == mainRegion) continue;
+
+            var (point1, point2) = GetClosestPointBetweenRegions(mainRegion, caveRegions[i]);
+            CreateTunnel(point1, point2);
+
+            if (showDebugInfo) Debug.Log($"Connected region {i} to main region");
+        }
+    }
+
+    private List<Vector2Int> GetLargestRegion()
+    {
+        List<Vector2Int> largest = caveRegions[0];
+
+        foreach (List<Vector2Int> region in caveRegions)
+        {
+            if (region.Count > largest.Count) largest = region;
+        }
+
+        return largest;
+    }
+
+    // Tolelom
+    // XXX: 이러면 양쪽에서 두 번 탐색할 이유는 없지 않나?
+    private (Vector2Int point1, Vector2Int point2) GetClosestPointBetweenRegions(List<Vector2Int> region1,
+        List<Vector2Int> region2)
+    {
+        Vector2Int closest1 = region1[0];
+        Vector2Int closest2 = region2[0];
+        float minDistance = float.MaxValue;
+
+        foreach (Vector2Int point1 in region1)
+        {
+            foreach (Vector2Int point2 in region2)
+            {
+                float distance = Vector2.Distance(point1, point2);
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    closest1 = point1;
+                    closest2 = point2;
+                }
+            }
+        }
+
+        return (closest1, closest2);
+    }
+
+    private void CreateTunnel(Vector2Int start, Vector2Int end)
+    {
+        Vector2Int current = start;
+
+        while (current.x != end.x)
+        {
+            dungeonGrid[current.x, current.y] = CellType.Floor;
+            current.x += (current.x < end.x) ? 1 : -1;
+        }
+
+        while (current.y != end.y)
+        {
+            dungeonGrid[current.x, current.y] = CellType.Floor;
+            current.y += (current.y < end.y) ? 1 : -1;
+        }
+
+        dungeonGrid[end.x, end.y] = CellType.Floor;
     }
 
     private void SpawnDungeonObjects()
     {
         if (showDebugInfo) Debug.Log($"Spawning dungeon objects");
-        
+
         ClearExistingObjects();
 
         for (int x = 0; x < dungeonWidth; x++)
