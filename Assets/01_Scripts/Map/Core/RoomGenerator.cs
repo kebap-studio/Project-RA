@@ -13,16 +13,9 @@ public class RoomGenerator : MonoBehaviour
     public float tileSize = 1f;
 
     [Header("Placement")]
-    // Generate position offset
     public Vector3 originPos = Vector3.zero;
 
-    // Room List
     private readonly List<Transform> _rooms = new List<Transform>();
-
-    void Start()
-    {
-        GenerateRoom();
-    }
 
     [ContextMenu("Generate Room")]
     public void GenerateRoom()
@@ -33,13 +26,11 @@ public class RoomGenerator : MonoBehaviour
             return;
         }
 
-        // Generate room object
         Vector3 GenPos = originPos - new Vector3(roomWidth * 0.5f * tileSize, 0f, roomHeight * 0.5f * tileSize);
         string roomName = $"Room{_rooms.Count + 1}";
         Transform room = new GameObject(roomName).transform;
         room.SetParent(null, true);
 
-        // Generate Floor
         for (int x = 0; x < roomWidth; x++)
         {
             for (int y = 0; y < roomHeight; y++)
@@ -49,7 +40,6 @@ public class RoomGenerator : MonoBehaviour
             }
         }
 
-        // Generate Wall
         for (int x = -1; x <= roomWidth; x++)
         {
             for (int y = -1; y <= roomHeight; y++)
@@ -62,7 +52,6 @@ public class RoomGenerator : MonoBehaviour
             }
         }
 
-        // add room at RoomList
         _rooms.Add(room);
         Debug.Log($"[RoomGenerator] Generated: {roomName} @ center: {originPos}, start: {GenPos}");
     }

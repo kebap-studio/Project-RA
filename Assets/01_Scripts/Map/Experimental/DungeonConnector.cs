@@ -7,9 +7,8 @@ public class RoomInfo
     public Vector3 position;
     public int width;
     public int height;
-    public Transform roomTransform; // ???
+    public Transform roomTransform;
 
-    // 생성자로 처리하면 안되나?
     public RoomInfo(Vector3 position, int width, int height, Transform roomTransform)
     {
         this.position = position;
@@ -57,7 +56,6 @@ public class DungeonConnector : MonoBehaviour
         if (roomGenerator != null)
             roomGenerator.DeleteAll();
 
-        // 이게 되나?
         for (int i = transform.childCount - 1; i >= 0; i--)
         {
             DestroyImmediate(transform.GetChild(i).gameObject);
@@ -91,7 +89,6 @@ public class DungeonConnector : MonoBehaviour
 
         do
         {
-            // Range 범위를 수정해야 되지 않을까?
             position = new Vector3(
                 Random.Range(-50f, 50f),
                 0f,
@@ -177,7 +174,6 @@ public class DungeonConnector : MonoBehaviour
 
     private void CreateCorridor(Vector3 start, Vector3 end)
     {
-        // ??????????? ㅇㅎ
         Vector3 corner = new Vector3(end.x, start.y, start.z);
 
         CreateCorridorSegment(start, corner);

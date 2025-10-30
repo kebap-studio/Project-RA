@@ -269,10 +269,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15c11045c3184a2983173d3927cde634, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  target: {fileID: 0}
-  offset: {x: 0, y: 10, z: -5}
-  smoothSpeed: 0.125
   fieldOfView: 60
+  offset: {x: 0, y: 10, z: -5}
+  target: {fileID: 0}
+  enableSmoothFollow: 1
+  smoothTime: 0.25
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -443,6 +444,56 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &918115844
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 918115846}
+  - component: {fileID: 918115845}
+  m_Layer: 0
+  m_Name: RoomGenerator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &918115845
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 918115844}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a0d122c0ea673343a94247a03697fca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Floor: {fileID: 4220653174889408280, guid: 219d40da5b864c341b00ad48db991bd6, type: 3}
+  Wall: {fileID: 0}
+  roomWidth: 10
+  roomHeight: 10
+  tileSize: 1
+  originPos: {x: 0, y: 0, z: 0}
+--- !u!4 &918115846
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 918115844}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1366590943
 GameObject:
   m_ObjectHideFlags: 0
@@ -592,6 +643,72 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1441151355}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1475644943
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1475644945}
+  - component: {fileID: 1475644944}
+  m_Layer: 0
+  m_Name: CellularAutomataDungeon
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1475644944
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1475644943}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b3d40b6da0d421489cbb3916a95de7f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dungeonWidth: 150
+  dungeonHeight: 150
+  cellSize: 1
+  dungeonCenter: {x: 0, y: 0, z: 0}
+  initialWallProbability: 0.38
+  smoothingIterations: 7
+  wallThreshold: 4
+  minCaveSize: 50
+  connectDisconnectedAreas: 1
+  gridBlockGenerator: {fileID: 0}
+  roomGenerator: {fileID: 918115845}
+  floorPrefab: {fileID: 0}
+  wallPrefab: {fileID: 0}
+  corridorPrefab: {fileID: 0}
+  generateSpecialRooms: 1
+  startRoomSize: 4
+  endRoomSize: 4
+  minDistanceBetweenRooms: 40
+  startRoomFloorPrefab: {fileID: 0}
+  endRoomFloorPrefab: {fileID: 0}
+  showDebugInfo: 1
+  visualizeGrid: 1
+--- !u!4 &1475644945
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1475644943}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -825,3 +942,5 @@ SceneRoots:
   - {fileID: 1441151357}
   - {fileID: 1506431485}
   - {fileID: 1598361751}
+  - {fileID: 1475644945}
+  - {fileID: 918115846}
