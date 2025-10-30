@@ -2404,12 +2404,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b3d40b6da0d421489cbb3916a95de7f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dungeonWidth: 80
-  dungeonHeight: 60
+  dungeonWidth: 100
+  dungeonHeight: 100
   cellSize: 1
   dungeonCenter: {x: 0, y: 0, z: 0}
   initialWallProbability: 0.38
-  smoothingIterations: 10
+  smoothingIterations: 7
   wallThreshold: 4
   minCaveSize: 50
   connectDisconnectedAreas: 1
@@ -2419,9 +2419,9 @@ MonoBehaviour:
   wallPrefab: {fileID: 0}
   corridorPrefab: {fileID: 0}
   generateSpecialRooms: 1
-  startRoomSize: 7
-  endRoomSize: 5
-  minDistanceBetweenRooms: 60
+  startRoomSize: 4
+  endRoomSize: 4
+  minDistanceBetweenRooms: 40
   startRoomFloorPrefab: {fileID: 0}
   endRoomFloorPrefab: {fileID: 0}
   showDebugInfo: 1
@@ -5883,7 +5883,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 090171e01fb114245ad8814903b468eb, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -27.25
+      value: -35.3
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 090171e01fb114245ad8814903b468eb, type: 3}
       propertyPath: m_LocalPosition.y
@@ -5891,7 +5891,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 090171e01fb114245ad8814903b468eb, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -24.11
+      value: 23.5
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 090171e01fb114245ad8814903b468eb, type: 3}
       propertyPath: m_LocalRotation.w
