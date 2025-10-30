@@ -65,42 +65,34 @@ public class PlayerController : MonoBehaviour
     private void HandleMovement()
     {
         Vector2 normalizedInput = _moveInput.normalized;
-        _moveDirection = new Vector3(normalizedInput.x, 0f, normalizedInput.y);
+        _moveDirection = Vector3.zero;
 
-        float currentSpeed = moveSpeed;
-
-        if (_moveDirection.magnitude > 0.1f)
+        if (_isLastPosition)
         {
-            // 가속
-            // _velocity = Vector3.MoveTowards(_velocity, _moveDirection * currentSpeed, Time.deltaTime * _acceleration);
-            // _velocity = _moveDirection * currentSpeed;
-            _velocity = Vector3.Lerp(_velocity, _moveDirection * currentSpeed, Time.deltaTime * _acceleration);
+            float distanceToLastPos = Vector3.Distance(transform.position, _lastPosition);
+            _moveDirection = Vector3.Normalize(_lastPosition - transform.position);
+
+            if (distanceToLastPos <= 0.1f)
+            {
+                _isLastPosition = false;
+                _moveInput = Vector2.zero;
+                _velocity = Vector3.zero;
+                return;
+            }
         }
         else
         {
-            // 감속
-            // 그냥 멈추기로
-            // _velocity = Vector3.MoveTowards(_velocity, Vector3.zero, Time.deltaTime * _deceleration);
-            // _velocity = Vector3.zero;
-            float smoothTime = 0.01f;
-            _velocity = Vector3.SmoothDamp(_velocity, Vector3.zero, ref _velocity, smoothTime);
-        }
-        _characterController.Move(_velocity * Time.deltaTime);
+            _moveDirection = new Vector3(normalizedInput.x, 0f, normalizedInput.y);
+        }   
+        _velocity = _moveDirection * moveSpeed;
 
         if (_animator != null)
         {
             // TODO: Animator 설정
         }
 
-        if (_isLastPosition)
-        {
-            float distanceToLastPos = Vector3.Distance(transform.position, _lastPosition);
-            if (distanceToLastPos < 0.1f)
-            {
-                _isLastPosition = false;
-                _moveInput = Vector2.zero;
-            }
-        }       
+        _animator.SetFloat("MoveSpeed", MoveSpeed());
+        _characterController.Move(_velocity * Time.deltaTime);
     }
 
     private void HandleRotation()
@@ -155,24 +147,60 @@ public class PlayerController : MonoBehaviour
             Vector3 worldMousePos = hitInfo.point;
             worldMousePos.y = transform.position.y; // 플레이어 높이에 맞춤
 
-            Vector3 direction = (worldMousePos - transform.position).normalized;
-            Debug.DrawRay(transform.position, direction * 5f, Color.green, 2f);
-            Vector2 dirction2D = new Vector2(direction.x, direction.z);
-
             if (Vector3.Distance(worldMousePos, transform.position) < 0.1f)
             {
                 // TODO: hitInfo 타겟 확인, 회전, 공격
+                _lastPosition = transform.position;
+                _isLastPosition = false;
             }
             else
             {
-                _moveInput = dirction2D;
+                _moveInput = Vector2.zero;
                 _lastPosition = worldMousePos;
                 _isLastPosition = true;
-            }            
+            }
         }
+    }
+
+    void OnSkill(InputValue value, int code)
+    {
+        if (_animator == null) return;
+
+        if (!value.isPressed) return;
+
+        if (_isMoving)
+        {
+            _isLastPosition = false;
+            _isMoving = false;
+            _animator.SetBool("IsMoving", _isMoving);
+        }
+
+        _animator.SetBool("IsAttack", true);
+        _animator.SetBool("IsAttack", true);
+        _animator.SetBool("IsAttack", true);
+        _animator.SetBool("IsAttack", true);
+        _animator.SetInteger("MotionNum", code);
+    }
+    
+    void OnSkill1(InputValue value)
+    {
+        OnSkill(value, 1);
+    }
+    void OnSkill2(InputValue value)
+    {
+        OnSkill(value, 2);
+    }
+    void OnSkill3(InputValue value)
+    {
+        OnSkill(value, 3);
+    }
+    void OnSkill4(InputValue value)
+    {
+        OnSkill(value, 4);
     }
 
     // 외부에서 호출 가능한 메서드들
     public Vector3 GetVelocity() => _velocity;
     public bool IsMoving() => _velocity.magnitude > 0.1f;
+    public float MoveSpeed() => Mathf.Clamp(_velocity.magnitude / moveSpeed, 0.0f, 1.0f);
 }
