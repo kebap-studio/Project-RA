@@ -183,7 +183,7 @@ AnimatorStateMachine:
     m_Position: {x: 210, y: 230, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -4237988221784788958}
-    m_Position: {x: 460, y: 230, z: 0}
+    m_Position: {x: 450, y: 230, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -3873566598612168833}
     m_Position: {x: 680, y: 230, z: 0}
@@ -222,7 +222,7 @@ AnimatorController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: BasicLocomotion
+  m_Name: BasicAnimation
   serializedVersion: 5
   m_AnimatorParameters:
   - m_Name: IsMoving
@@ -496,14 +496,14 @@ AnimatorStateMachine:
   m_ChildStates:
   - serializedVersion: 1
     m_State: {fileID: -9077467094302148844}
-    m_Position: {x: 520, y: -120, z: 0}
+    m_Position: {x: 390, y: -60, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -7842579014521498563}
     m_Position: {x: 280, y: 20, z: 0}
   m_ChildStateMachines:
   - serializedVersion: 1
     m_StateMachine: {fileID: -2652903518905257818}
-    m_Position: {x: 520, y: 230, z: 0}
+    m_Position: {x: 390, y: 110, z: 0}
   m_AnyStateTransitions: []
   m_EntryTransitions: []
   m_StateMachineTransitions:

@@ -15,7 +15,6 @@ Shader "Unlit/LimlightShader"
 
         Pass
         {
-
             // 알파 블렌딩 활성화
             Blend SrcAlpha OneMinusSrcAlpha
             CGPROGRAM
