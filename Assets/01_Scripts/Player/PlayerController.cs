@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Unity.Mathematics.Geometry;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 
@@ -24,6 +25,12 @@ public class PlayerController : MonoBehaviour
     // Movement
     private Vector3 _moveDirection;
     private Vector3 _velocity;
+    private float _acceleration = 1.5f;
+    private float _deceleration = 5f;
+
+    // Attack Move
+    private Vector3 _lastPosition;
+    private bool _isLastPosition = false;
 
     private bool _isMoving = false;
     private bool _wasMoving = false;
@@ -58,17 +65,34 @@ public class PlayerController : MonoBehaviour
     private void HandleMovement()
     {
         Vector2 normalizedInput = _moveInput.normalized;
-        _moveDirection = new Vector3(normalizedInput.x, 0f, normalizedInput.y);
+        _moveDirection = Vector3.zero;
 
-        float currentSpeed = moveSpeed;
+        if (_isLastPosition)
+        {
+            float distanceToLastPos = Vector3.Distance(transform.position, _lastPosition);
+            _moveDirection = Vector3.Normalize(_lastPosition - transform.position);
 
-        _velocity = _moveDirection * currentSpeed;
-        _characterController.Move(_velocity * Time.deltaTime);
+            if (distanceToLastPos <= 0.1f)
+            {
+                _isLastPosition = false;
+                _moveInput = Vector2.zero;
+                _velocity = Vector3.zero;
+                return;
+            }
+        }
+        else
+        {
+            _moveDirection = new Vector3(normalizedInput.x, 0f, normalizedInput.y);
+        }   
+        _velocity = _moveDirection * moveSpeed;
 
         if (_animator != null)
         {
             // TODO: Animator 설정
         }
+
+        _animator.SetFloat("MoveSpeed", MoveSpeed());
+        _characterController.Move(_velocity * Time.deltaTime);
     }
 
     private void HandleRotation()
@@ -105,15 +129,78 @@ public class PlayerController : MonoBehaviour
     }
 
     // Input System Events
-    void OnMove(InputValue value) 
+    void OnMove(InputValue value)
     {
         _moveInput = value.Get<Vector2>();
+        _isLastPosition = false;
 
         if (showDebugInfo)
             Debug.Log($"Move Input: {_moveInput}");
     }
 
+    void OnAttack(InputValue value)
+    {
+        Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
+        Ray ray = Camera.main.ScreenPointToRay(mouseScreenPos);
+        if (Physics.Raycast(ray, out RaycastHit hitInfo, 100f))
+        {
+            Vector3 worldMousePos = hitInfo.point;
+            worldMousePos.y = transform.position.y; // 플레이어 높이에 맞춤
+
+            if (Vector3.Distance(worldMousePos, transform.position) < 0.1f)
+            {
+                // TODO: hitInfo 타겟 확인, 회전, 공격
+                _lastPosition = transform.position;
+                _isLastPosition = false;
+            }
+            else
+            {
+                _moveInput = Vector2.zero;
+                _lastPosition = worldMousePos;
+                _isLastPosition = true;
+            }
+        }
+    }
+
+    void OnSkill(InputValue value, int code)
+    {
+        if (_animator == null) return;
+
+        if (!value.isPressed) return;
+
+        if (_isMoving)
+        {
+            _isLastPosition = false;
+            _isMoving = false;
+            _animator.SetBool("IsMoving", _isMoving);
+        }
+
+        _animator.SetBool("IsAttack", true);
+        _animator.SetBool("IsAttack", true);
+        _animator.SetBool("IsAttack", true);
+        _animator.SetBool("IsAttack", true);
+        _animator.SetInteger("MotionNum", code);
+    }
+    
+    void OnSkill1(InputValue value)
+    {
+        OnSkill(value, 1);
+    }
+    void OnSkill2(InputValue value)
+    {
+        OnSkill(value, 2);
+    }
+    void OnSkill3(InputValue value)
+    {
+        OnSkill(value, 3);
+    }
+    void OnSkill4(InputValue value)
+    {
+        OnSkill(value, 4);
+    }
+
     // 외부에서 호출 가능한 메서드들
     public Vector3 GetVelocity() => _velocity;
     public bool IsMoving() => _velocity.magnitude > 0.1f;
+    public float MoveSpeed() => Mathf.Clamp(_velocity.magnitude / moveSpeed, 0.0f, 1.0f);
 }
