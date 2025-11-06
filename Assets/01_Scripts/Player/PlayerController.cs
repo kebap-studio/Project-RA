@@ -1,206 +1,352 @@
 ﻿using Unity.Mathematics.Geometry;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System;
 
-
+/// <summary>
+/// 플레이어 입력을 처리하고 PlayerCharacter에 명령을 전달하는 컨트롤러
+/// </summary>
+[RequireComponent(typeof(PlayerCharacter))]
 public class PlayerController : MonoBehaviour
 {
-    [Header("Movement Settings")]
-    [SerializeField] private float moveSpeed = 2f;
-    [SerializeField] private float sprintMultiplier = 1.5f;
+    [Header("Input Settings")]
+    [SerializeField] private bool enableDebugInput = true;
 
-    [Header("Rotation Settings")]
-    [SerializeField] private float rotateSpeed = 10f;
-
-    [Header("Debug")]
-    [SerializeField] private bool showDebugInfo = true;
+    [Header("Mouse Settings")]
+    [SerializeField] private LayerMask groundLayerMask = -1;
+    [SerializeField] private float maxInteractionDistance = 100f;
 
     // Components
-    private CharacterController _characterController;
-    private Animator _animator;
+    private PlayerCharacter _playerCharacter;
+    private Camera _mainCamera;
+    private PlayerInput _playerInput;
 
-    // input
+    // Input Values
     private Vector2 _moveInput;
+    private bool _isSprintHeld;
 
-    // Movement
-    private Vector3 _moveDirection;
-    private Vector3 _velocity;
-    private float _acceleration = 1.5f;
-    private float _deceleration = 5f;
+    // Click-to-Move System
+    private Vector3 _lastClickPosition;
+    private bool _isMovingToClickPosition;
 
-    // Attack Move
-    private Vector3 _lastPosition;
-    private bool _isLastPosition = false;
+    // Events
+    public static event Action<Vector2> OnMoveInputChanged;
+    public static event Action<Vector3> OnAttackRequested;
+    public static event Action<int> OnSkillRequested;
+    public static event Action<bool> OnSprintChanged;
 
-    private bool _isMoving = false;
-    private bool _wasMoving = false;
+
+    #region Unity Lifecycle
 
     private void Awake()
     {
-        _characterController = GetComponent<CharacterController>();
-        _animator = GetComponent<Animator>();
+        InitializeComponents();
+        SetupInputCallbacks();
+    }
 
-        if (_animator == null)
-        {
-            Debug.LogError("Animator component not found on " + gameObject.name);
-        }
 
-        var playerInput = GetComponent<PlayerInput>();
-        if (playerInput != null)
-            Debug.Log("PlayerInput 연결됨!");
+    private void OnEnable()
+    {
+        _playerInput?.ActivateInput();
+    }
+
+    private void OnDisable()
+    {
+        _playerInput?.DeactivateInput();
     }
 
     private void Update()
     {
-        HandleMovement();
-        HandleRotation();
-        UpdateAnimations();
+        ProcessMovementInput();
+        HandleClickToMove();
 
-        if (showDebugInfo)
+        if (enableDebugInput)
         {
-            DebugInfo();
+            DrawDebugInfo();
         }
     }
 
-    private void HandleMovement()
+    #endregion
+
+
+    #region Initialization
+
+    private void InitializeComponents()
     {
-        Vector2 normalizedInput = _moveInput.normalized;
-        _moveDirection = Vector3.zero;
+        _playerCharacter = GetComponent<PlayerCharacter>();
+        _mainCamera = Camera.main ?? FindFirstObjectByType<Camera>();
+        _playerInput = GetComponent<PlayerInput>();
 
-        if (_isLastPosition)
+        ValidateComponents();
+    }
+
+    private void ValidateComponents()
+    {
+        if (_playerCharacter == null)
         {
-            float distanceToLastPos = Vector3.Distance(transform.position, _lastPosition);
-            _moveDirection = Vector3.Normalize(_lastPosition - transform.position);
+            Debug.LogError($"[{nameof(PlayerController)}] PlayerCharacter component not found on {gameObject.name}");
+        }
 
-            if (distanceToLastPos <= 0.1f)
-            {
-                _isLastPosition = false;
-                _moveInput = Vector2.zero;
-                _velocity = Vector3.zero;
-                return;
-            }
+        if (_mainCamera == null)
+        {
+            Debug.LogError($"[{nameof(PlayerController)}] Main Camera not found");
+        }
+
+        if (_playerInput == null)
+        {
+            Debug.LogWarning($"[{nameof(PlayerController)}] PlayerInput component not found on {gameObject.name}");
+        }
+    }
+
+    private void SetupInputCallbacks()
+    {
+        if (_playerInput == null) return;
+
+        Debug.Log($"[{nameof(PlayerController)}] Input System connected successfully");
+    }
+
+    #endregion
+
+    #region Input Processing
+
+    private void ProcessMovementInput()
+    {
+        if (_playerCharacter == null || !_playerCharacter.IsAlive()) return;
+
+        // 키보드 입력이 있으면 클릭 이동 취소
+        if (_moveInput.magnitude > 0.1f)
+        {
+            _isMovingToClickPosition = false;
+        }
+
+        // 클릭 이동 중이 아닐 때만 키보드 입력 처리
+        if (!_isMovingToClickPosition)
+        {
+            Vector3 moveDirection = CalculateMovementDirection();
+            _playerCharacter.Move(moveDirection);
+        }
+    }
+
+    private Vector3 CalculateMovementDirection()
+    {
+        if (_moveInput.magnitude < 0.1f) return Vector3.zero;
+
+        Vector2 normalizedInput = _moveInput.normalized;
+        return new Vector3(normalizedInput.x, 0f, normalizedInput.y);
+    }
+
+    private void HandleClickToMove()
+    {
+        if (!_isMovingToClickPosition || _playerCharacter == null) return;
+
+        float distanceToTarget = Vector3.Distance(transform.position, _lastClickPosition);
+
+        if (distanceToTarget <= 0.1f)
+        {
+            // 목표 지점 도달
+            _isMovingToClickPosition = false;
+            _playerCharacter.Move(Vector3.zero);
         }
         else
         {
-            _moveDirection = new Vector3(normalizedInput.x, 0f, normalizedInput.y);
-        }   
-        _velocity = _moveDirection * moveSpeed;
-
-        if (_animator != null)
-        {
-            // TODO: Animator 설정
-        }
-
-        _animator.SetFloat("MoveSpeed", MoveSpeed());
-        _characterController.Move(_velocity * Time.deltaTime);
-    }
-
-    private void HandleRotation()
-    {
-        if (_moveDirection.magnitude > 0.1f)
-        {
-            Quaternion targetRotation = Quaternion.LookRotation(_moveDirection);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotateSpeed * Time.deltaTime);
+            // 클릭 지점으로 이동
+            Vector3 direction = (_lastClickPosition - transform.position).normalized;
+            _playerCharacter.Move(direction);
         }
     }
 
-    private void DebugInfo()
+    private Vector3? GetWorldPositionFromMouse()
     {
-        Debug.DrawRay(transform.position, _moveDirection * 2f, Color.red);
-        Debug.DrawRay(transform.position, transform.forward * 2f, Color.blue);
-    }
+        if (_mainCamera == null) return null;
 
-    private void UpdateAnimations()
-    {
-        if (_animator == null) return;
+        Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
+        Ray ray = _mainCamera.ScreenPointToRay(mouseScreenPos);
 
-        _isMoving = IsMoving();
-
-        if (_isMoving != _wasMoving)
+        if (Physics.Raycast(ray, out RaycastHit hitInfo, maxInteractionDistance, groundLayerMask))
         {
-            _animator.SetBool("IsMoving", _isMoving);
-            _wasMoving = _isMoving;
-
-            if (showDebugInfo)
-            {
-                Debug.Log($"Movement State: {(_isMoving ? "Moving" : "Idle")}");
-            }
+            Vector3 worldPos = hitInfo.point;
+            worldPos.y = transform.position.y; // 플레이어 높이에 맞춤
+            return worldPos;
         }
+
+        return null;
     }
 
-    // Input System Events
-    void OnMove(InputValue value)
+    #endregion
+
+    #region Input System Events
+
+    public void OnMove(InputValue value)
     {
         _moveInput = value.Get<Vector2>();
-        _isLastPosition = false;
+        OnMoveInputChanged?.Invoke(_moveInput);
 
-        if (showDebugInfo)
-            Debug.Log($"Move Input: {_moveInput}");
+        if (enableDebugInput)
+        {
+            Debug.Log($"[{nameof(PlayerController)}] Move Input: {_moveInput}");
+        }
     }
 
-    void OnAttack(InputValue value)
+    public void OnSprint(InputValue value)
     {
-        Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
-        Ray ray = Camera.main.ScreenPointToRay(mouseScreenPos);
-        if (Physics.Raycast(ray, out RaycastHit hitInfo, 100f))
-        {
-            Vector3 worldMousePos = hitInfo.point;
-            worldMousePos.y = transform.position.y; // 플레이어 높이에 맞춤
+        _isSprintHeld = value.isPressed;
+        _playerCharacter?.SetSprint(_isSprintHeld);
+        OnSprintChanged?.Invoke(_isSprintHeld);
 
-            if (Vector3.Distance(worldMousePos, transform.position) < 0.1f)
+        if (enableDebugInput)
+        {
+            Debug.Log($"[{nameof(PlayerController)}] Sprint: {(_isSprintHeld ? "Started" : "Stopped")}");
+        }
+    }
+
+    public void OnAttack(InputValue value)
+    {
+        if (!value.isPressed || _playerCharacter == null || !_playerCharacter.IsAlive()) return;
+
+        Vector3? targetPosition = GetWorldPositionFromMouse();
+        if (targetPosition.HasValue)
+        {
+            float distanceToTarget = Vector3.Distance(transform.position, targetPosition.Value);
+
+            if (distanceToTarget < 0.1f)
             {
-                // TODO: hitInfo 타겟 확인, 회전, 공격
-                _lastPosition = transform.position;
-                _isLastPosition = false;
+                // 제자리에서 공격 (적이 있는지 확인 필요)
+                _playerCharacter.Attack(transform.position + transform.forward);
+                _isMovingToClickPosition = false;
             }
             else
             {
-                _moveInput = Vector2.zero;
-                _lastPosition = worldMousePos;
-                _isLastPosition = true;
+                // 클릭 위치로 이동 또는 공격
+                _playerCharacter.Attack(targetPosition.Value);
+
+                // 공격 범위 밖이면 이동 설정
+                if (distanceToTarget > 2f) // attackRange와 동기화 필요
+                {
+                    _lastClickPosition = targetPosition.Value;
+                    _isMovingToClickPosition = true;
+                }
+            }
+
+            OnAttackRequested?.Invoke(targetPosition.Value);
+
+            if (enableDebugInput)
+            {
+                Debug.Log($"[{nameof(PlayerController)}] Attack requested at: {targetPosition.Value}");
             }
         }
     }
 
-    void OnSkill(InputValue value, int code)
+    public void OnSkill1(InputValue value) => HandleSkillInput(value, 1);
+    public void OnSkill2(InputValue value) => HandleSkillInput(value, 2);
+    public void OnSkill3(InputValue value) => HandleSkillInput(value, 3);
+    public void OnSkill4(InputValue value) => HandleSkillInput(value, 4);
+
+    private void HandleSkillInput(InputValue value, int skillNumber)
     {
-        if (_animator == null) return;
+        if (!value.isPressed || _playerCharacter == null || !_playerCharacter.IsAlive()) return;
 
-        if (!value.isPressed) return;
+        // 클릭 이동 취소
+        _isMovingToClickPosition = false;
 
-        if (_isMoving)
+        _playerCharacter.UseSkill(skillNumber);
+        OnSkillRequested?.Invoke(skillNumber);
+
+        if (enableDebugInput)
         {
-            _isLastPosition = false;
-            _isMoving = false;
-            _animator.SetBool("IsMoving", _isMoving);
+            Debug.Log($"[{nameof(PlayerController)}] Skill {skillNumber} used");
+        }
+    }
+
+    #endregion
+
+    #region Public Methods
+
+    /// <summary>
+    /// 입력을 활성화합니다
+    /// </summary>
+    public void EnableInput()
+    {
+        _playerInput?.ActivateInput();
+    }
+
+    /// <summary>
+    /// 입력을 비활성화합니다
+    /// </summary>
+    public void DisableInput()
+    {
+        _playerInput?.DeactivateInput();
+    }
+
+    /// <summary>
+    /// 현재 이동 입력값을 반환합니다
+    /// </summary>
+    public Vector2 GetMoveInput() => _moveInput;
+
+    /// <summary>
+    /// 스프린트 상태를 반환합니다
+    /// </summary>
+    public bool IsSprintHeld() => _isSprintHeld;
+
+    /// <summary>
+    /// 클릭 이동 중인지 확인합니다
+    /// </summary>
+    public bool IsMovingToClickPosition() => _isMovingToClickPosition;
+
+    /// <summary>
+    /// 플레이어 캐릭터 참조를 반환합니다
+    /// </summary>
+    public PlayerCharacter GetPlayerCharacter() => _playerCharacter;
+
+    #endregion
+
+    #region Debug
+
+    private void DrawDebugInfo()
+    {
+        if (_playerCharacter == null) return;
+
+        Vector3 playerPos = transform.position;
+        Vector3 moveDirection = CalculateMovementDirection();
+
+        // 이동 방향 표시 (빨간색)
+        if (moveDirection != Vector3.zero)
+        {
+            Debug.DrawRay(playerPos, moveDirection * 2f, Color.red);
         }
 
-        _animator.SetBool("IsAttack", true);
-        _animator.SetBool("IsAttack", true);
-        _animator.SetBool("IsAttack", true);
-        _animator.SetBool("IsAttack", true);
-        _animator.SetInteger("MotionNum", code);
-    }
-    
-    void OnSkill1(InputValue value)
-    {
-        OnSkill(value, 1);
-    }
-    void OnSkill2(InputValue value)
-    {
-        OnSkill(value, 2);
-    }
-    void OnSkill3(InputValue value)
-    {
-        OnSkill(value, 3);
-    }
-    void OnSkill4(InputValue value)
-    {
-        OnSkill(value, 4);
+        // 플레이어 전방 방향 표시 (파란색)
+        Debug.DrawRay(playerPos, transform.forward * 2f, Color.blue);
+
+        // 마우스 위치 표시 (초록색)
+        Vector3? mouseWorldPos = GetWorldPositionFromMouse();
+        if (mouseWorldPos.HasValue)
+        {
+            Debug.DrawLine(playerPos, mouseWorldPos.Value, Color.green);
+        }
+
+        // 클릭 이동 목표 지점 표시 (노란색)
+        if (_isMovingToClickPosition)
+        {
+            Debug.DrawLine(playerPos, _lastClickPosition, Color.yellow);
+        }
     }
 
-    // 외부에서 호출 가능한 메서드들
-    public Vector3 GetVelocity() => _velocity;
-    public bool IsMoving() => _velocity.magnitude > 0.1f;
-    public float MoveSpeed() => Mathf.Clamp(_velocity.magnitude / moveSpeed, 0.0f, 1.0f);
+    /// <summary>
+    /// 원을 그리는 커스텀 함수 (Debug.DrawLine 사용)
+    /// </summary>
+    private void DrawWireCircle(Vector3 center, float radius, Color color, int segments = 32)
+    {
+        float angleStep = 360f / segments;
+        Vector3 prevPoint = center + new Vector3(radius, 0, 0);
+
+        for (int i = 1; i <= segments; i++)
+        {
+            float angle = angleStep * i * Mathf.Deg2Rad;
+            Vector3 newPoint = center + new Vector3(Mathf.Cos(angle) * radius, 0, Mathf.Sin(angle) * radius);
+            Debug.DrawLine(prevPoint, newPoint, color);
+            prevPoint = newPoint;
+        }
+    }
+
+    #endregion
 }
