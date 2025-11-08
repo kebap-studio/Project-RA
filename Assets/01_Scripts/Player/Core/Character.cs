@@ -129,7 +129,6 @@ public abstract class Character : MonoBehaviour
 
     #endregion
 
-
     #region Protected Methods
 
     /// <summary>
@@ -145,7 +144,7 @@ public abstract class Character : MonoBehaviour
     /// <summary>
     /// 이동 속도를 설정합니다
     /// </summary>
-    protected void SetMoveSpeeed(float value)
+    protected void SetMoveSpeed(float value)
     {
         moveSpeed = Mathf.Max(0, value);
     }

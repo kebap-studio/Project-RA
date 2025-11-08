@@ -8,11 +8,11 @@
 public class PlayerCharacter : Character
 {
     [Header("Movement Settings")]
-    [SerializeField] float baseSpeed = 2f;
+    [SerializeField] private float baseSpeed = 2f;
     [SerializeField] private float sprintMultiplier = 1.5f;
 
     [Header("Rotation Settings")]
-    [SerializeField] float rotationSpeed = 10f;
+    [SerializeField] private float rotationSpeed = 10f;
 
     [Header("Combat Settings")]
     [SerializeField] private float attackRange = 2f;
@@ -27,7 +27,7 @@ public class PlayerCharacter : Character
     private bool _isMovingToTarget;
     private bool _isSprinting;
 
-    // Animation IDs (Unity 6 최적화)
+    // Animation IDs 
     int _animIDMoveSpeed;
     int _animIDIsMoving;
     int _animIDIsAttack;
@@ -52,8 +52,7 @@ public class PlayerCharacter : Character
     }
 
     #endregion
-
-
+    
     #region Initialization
 
     private void InitializeComponents()
@@ -69,7 +68,7 @@ public class PlayerCharacter : Character
             Debug.LogError($"[{nameof(PlayerCharacter)}] CharacterController component not found on {gameObject.name}");
         }
 
-        if (_animator != null)
+        if (_animator == null)
         {
             Debug.LogError($"[{nameof(PlayerCharacter)}] Animator component not found on {gameObject.name}");
         }
@@ -153,7 +152,6 @@ public class PlayerCharacter : Character
 
     #endregion
     
-    
     #region Skills
 
     /// <summary>
@@ -161,12 +159,12 @@ public class PlayerCharacter : Character
     /// </summary>
     public void UseSkill(int skillNumber)
     {
-        if (_animator != null || _isAttacking || !IsAlive()) return;
+        if (_animator == null || _isAttacking || !IsAlive()) return;
 
         if (IsMoving()) StopMovement();
 
         _isAttacking = true;
-        
+
         // 스킬 애니메이션 트리거
         // _animator.SetBool(_animIDIsAttack, true);
         // _animator.SetInteger(_animIDMotionNum, skillNumber);
@@ -176,22 +174,22 @@ public class PlayerCharacter : Character
     {
         _isSprinting = isSprinting;
     }
-    
+
     #endregion
-    
+
     #region Movement
 
     private void HandleMovement()
     {
         if (_characterController == null) return;
-        
+
         _characterController.Move(_currentVelocity * Time.deltaTime);
     }
 
     private void HandleTargetMovement()
     {
         if (!_isMovingToTarget) return;
-        
+
         float distanceToTarget = Vector3.Distance(transform.position, _targetPosition);
 
         if (distanceToTarget <= 0.1f)
@@ -203,10 +201,10 @@ public class PlayerCharacter : Character
         }
         else
         {
-            Vector3 direction =  (_targetPosition - transform.position).normalized;
+            Vector3 direction = (_targetPosition - transform.position).normalized;
             float currentSpeed = _isSprinting ? sprintMultiplier : moveSpeed;
             _currentVelocity = direction * currentSpeed;
-            
+
             Quaternion targetRotation = Quaternion.LookRotation(direction);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
@@ -220,30 +218,30 @@ public class PlayerCharacter : Character
 
     private void PerformAttack()
     {
-        if (_animator != null || !IsAlive()) return;
+        if (_animator == null || !IsAlive()) return;
 
         _isAttacking = true;
         // _animator.SetBool(_animIDIsAttack, true);
         // _animator.SetInteger(_animIDMotionNum, 0); // 기본 공격
     }
-    
+
     #endregion
-    
+
     #region Animation
 
     private void UpdateAnimations()
     {
-        if (_animator != null) return;
+        if (_animator == null) return;
 
         bool isMoving = IsMoving();
         float normalizedSpeed = GetNormalizedSpeed();
-        
+
         // _animator.SetBool(_animIDIsMoving, isMoving);
         // _animator.SetFloat(_animIDMoveSpeed, normalizedSpeed);
     }
-    
+
     #endregion
-    
+
     #region Public Methods
 
     public void StopMovement()
@@ -254,7 +252,7 @@ public class PlayerCharacter : Character
     /// 현재 이동 중인지 확인합니다
     /// </summary>
     public bool IsMoving() => _currentVelocity.magnitude > 0.1f;
-    
+
     /// <summary>
     /// 정규화된 이동 속도를 반환합니다 (0-1)
     /// </summary>
@@ -268,7 +266,7 @@ public class PlayerCharacter : Character
     /// 현재 속도를 반환합니다
     /// </summary>
     public Vector3 GetVelocity() => _currentVelocity;
-    
+
     /// <summary>
     /// 공격 중인지 확인합니다
     /// </summary>
@@ -280,9 +278,9 @@ public class PlayerCharacter : Character
     public bool IsSprinting() => _isSprinting;
 
     #endregion
-    
+
     #region Animation Events
-    
+
     /// <summary>
     /// 애니메이션에서 호출되는 공격 완료 이벤트
     /// </summary>
@@ -293,7 +291,7 @@ public class PlayerCharacter : Character
         _isAttacking = false;
         _animator.SetBool(_animIDIsAttack, false);
     }
-    
+
     /// <summary>
     /// 애니메이션에서 호출되는 공격 히트 이벤트
     /// </summary>
@@ -302,7 +300,7 @@ public class PlayerCharacter : Character
         // 실제 데미지 처리 로직
         ProcessAttackHit();
     }
-    
+
     private void ProcessAttackHit()
     {
         // 공격 범위 내의 적들을 찾아서 데미지 처리
@@ -321,7 +319,6 @@ public class PlayerCharacter : Character
             }
         }
     }
-    
-    
+
     #endregion
 }
