@@ -32,6 +32,7 @@ public class PlayerCharacter : Character
     int _animIDIsMoving;
     int _animIDIsAttack;
     int _animIDMotionNum;
+    int _animIDIsSprinting;
 
     private bool _isAttacking;
 
@@ -80,6 +81,7 @@ public class PlayerCharacter : Character
         _animIDIsMoving = Animator.StringToHash("IsMoving");
         _animIDIsAttack = Animator.StringToHash("IsAttack");
         _animIDMotionNum = Animator.StringToHash("MotionNum");
+        _animIDIsSprinting = Animator.StringToHash("IsSprinting");
     }
 
     #endregion
@@ -108,15 +110,15 @@ public class PlayerCharacter : Character
 
         if (distanceToTarget <= attackRange)
         {
-            // 즉시 공격
-            PerformAttack();
-
             // 타겟 방향으로 회전
             Vector3 lookDirection = (targetPosition - transform.position).normalized;
             if (lookDirection != Vector3.zero)
             {
                 transform.rotation = Quaternion.LookRotation(lookDirection);
             }
+            
+            // 즉시 공격
+            PerformAttack();
         }
         else
         {
@@ -173,6 +175,11 @@ public class PlayerCharacter : Character
     public void SetSprint(bool isSprinting)
     {
         _isSprinting = isSprinting;
+        
+        if (_animator != null)
+        {
+            _animator.SetBool(_animIDIsSprinting, _isSprinting);
+        }
     }
 
     #endregion
@@ -196,13 +203,12 @@ public class PlayerCharacter : Character
         {
             _isMovingToTarget = false;
             _currentVelocity = Vector3.zero;
-
             PerformAttack();
         }
         else
         {
             Vector3 direction = (_targetPosition - transform.position).normalized;
-            float currentSpeed = _isSprinting ? sprintMultiplier : moveSpeed;
+            float currentSpeed = _isSprinting ? moveSpeed * sprintMultiplier : moveSpeed;
             _currentVelocity = direction * currentSpeed;
 
             Quaternion targetRotation = Quaternion.LookRotation(direction);
