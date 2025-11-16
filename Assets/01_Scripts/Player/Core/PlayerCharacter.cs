@@ -90,7 +90,13 @@ public class PlayerCharacter : Character
 
     public override void Move(Vector3 direction)
     {
-        if (_isAttacking || _isMovingToTarget) return;
+        Debug.Log($"<color=cyan>[PlayerCharacter.Move] Called with direction: {direction}</color>");
+        if (_isAttacking || _isMovingToTarget)
+        {
+            
+            Debug.LogWarning($"<color=red>[PlayerCharacter.Move] BLOCKED - isAttacking: {_isAttacking}, isMovingToTarget: {_isMovingToTarget}</color>");
+            return;
+        }
 
         float currentSpeed = _isSprinting ? moveSpeed * sprintMultiplier : moveSpeed;
         _currentVelocity = direction * currentSpeed;
@@ -188,8 +194,12 @@ public class PlayerCharacter : Character
 
     private void HandleMovement()
     {
-        if (_characterController == null) return;
-
+        if (_characterController == null) 
+        {
+            Debug.LogError("[PlayerCharacter] CharacterController is NULL!");
+            return;
+        }
+        
         _characterController.Move(_currentVelocity * Time.deltaTime);
     }
 
@@ -226,7 +236,7 @@ public class PlayerCharacter : Character
     {
         if (_animator == null || !IsAlive()) return;
 
-        _isAttacking = true;
+        // _isAttacking = true;
         // _animator.SetBool(_animIDIsAttack, true);
         // _animator.SetInteger(_animIDMotionNum, 0); // 기본 공격
     }

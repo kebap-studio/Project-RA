@@ -65,9 +65,17 @@ public class PlayerController : MonoBehaviour
             DrawDebugInfo();
         }
     }
+    
+    private void OnDestroy()
+    {
+        // 모든 구독자 해제
+        OnMoveInputChanged = null;
+        OnAttackRequested = null;
+        OnSkillRequested = null;
+        OnSprintChanged = null;
+    }
 
     #endregion
-
 
     #region Initialization
 
