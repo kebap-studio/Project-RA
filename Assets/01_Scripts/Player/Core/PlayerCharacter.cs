@@ -288,13 +288,11 @@ public class PlayerCharacter : Character
     public void SetSprint(bool isSprinting)
     {
         _isSprinting = isSprinting;
-
+    
         if (_animator != null)
         {
-            _animator.SetBool(_animIDIsSprinting, _isSprinting);
+            _animator.SetBool(_animIDIsSprinting, isSprinting);
         }
-
-        Debug.Log($"[SaDo PlayerCharacter] Sprint: {(_isSprinting ? "ON" : "OFF")}");
     }
 
     #endregion
