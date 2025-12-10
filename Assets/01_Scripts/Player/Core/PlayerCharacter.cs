@@ -217,6 +217,27 @@ public class PlayerCharacter : Character
         Debug.Log($"[SaDo PlayerCharacter] Moving to target: {targetPosition}");
     }
 
+    /// <summary>
+    /// 공격이 완료되었는지 확인합니다
+    /// </summary>
+    public bool IsAttackComplete()
+    {
+        if (_animator == null) return false;
+
+        AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo(0);
+    
+        // Attack 상태가 아니거나 애니메이션이 끝났으면 true
+        if (!stateInfo.IsName("Attack"))
+        {
+            return true;
+        }
+
+        // Attack 상태인데 애니메이션이 끝났으면 true
+        return stateInfo.normalizedTime >= 1.0f;
+    }
+
+    
+    
     #endregion
 
     #region Movement System

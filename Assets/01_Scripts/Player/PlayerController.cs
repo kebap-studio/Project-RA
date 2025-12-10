@@ -15,6 +15,7 @@ public class PlayerController : MonoBehaviour
     [Header("Mouse Settings")]
     [SerializeField] private LayerMask groundLayerMask = -1;
     [SerializeField] private float maxInteractionDistance = 100f;
+    [SerializeField] private float attackRange = 2f; // 공격 범위 추가
 
     // Components
     private PlayerCharacter _playerCharacter;
@@ -24,6 +25,7 @@ public class PlayerController : MonoBehaviour
     // Input Values
     private Vector2 _moveInput;
     private bool _isSprintHeld;
+    private bool _isAttacking; // 🔧 공격 상태 추가
 
     // Click-to-Move System
     private Vector3 _lastClickPosition;
@@ -44,7 +46,6 @@ public class PlayerController : MonoBehaviour
         SetupInputCallbacks();
     }
 
-
     private void OnEnable()
     {
         _playerInput?.ActivateInput();
@@ -59,6 +60,7 @@ public class PlayerController : MonoBehaviour
     {
         ProcessMovementInput();
         HandleClickToMove();
+        HandleAttackCompletion(); // 🔧 공격 종료 처리 추가
 
         if (enableDebugInput)
         {
@@ -151,9 +153,14 @@ public class PlayerController : MonoBehaviour
 
         if (distanceToTarget <= 0.1f)
         {
-            // 목표 지점 도달
+            // 목표 지점 도달 - 클릭 이동 종료
             _isMovingToClickPosition = false;
             _playerCharacter.Move(Vector3.zero);
+
+            if (enableDebugInput)
+            {
+                Debug.Log($"[{nameof(PlayerController)}] Reached click destination");
+            }
         }
         else
         {
@@ -195,10 +202,18 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 🔧 수정 1: Sprint 버튼 때도 isSprint가 false가 되도록 수정
+    /// </summary>
     public void OnSprint(InputValue value)
     {
-        _isSprintHeld = value.isPressed;
-        _playerCharacter?.SetSprint(_isSprintHeld);
+        _isSprintHeld = value.isPressed; // Press/Release 자동 처리
+        
+        if (_playerCharacter != null)
+        {
+            _playerCharacter.SetSprint(_isSprintHeld);
+        }
+        
         OnSprintChanged?.Invoke(_isSprintHeld);
 
         if (enableDebugInput)
@@ -207,32 +222,42 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 🔧 수정 2: Attack을 Bool 기반으로 변경
+    /// </summary>
     public void OnAttack(InputValue value)
     {
         if (!value.isPressed || _playerCharacter == null || !_playerCharacter.IsAlive()) return;
+
+        // 이미 공격 중이면 추가 공격 방지
+        if (_isAttacking)
+        {
+            if (enableDebugInput)
+            {
+                Debug.Log($"[{nameof(PlayerController)}] Attack already in progress");
+            }
+            return;
+        }
 
         Vector3? targetPosition = GetWorldPositionFromMouse();
         if (targetPosition.HasValue)
         {
             float distanceToTarget = Vector3.Distance(transform.position, targetPosition.Value);
 
-            if (distanceToTarget < 0.1f)
+            // 공격 시작
+            _isAttacking = true;
+            _playerCharacter.Attack(targetPosition.Value);
+
+            // 공격 범위 밖이면 이동 설정
+            if (distanceToTarget > attackRange)
             {
-                // 제자리에서 공격 (적이 있는지 확인 필요)
-                _playerCharacter.Attack(transform.position + transform.forward);
-                _isMovingToClickPosition = false;
+                _lastClickPosition = targetPosition.Value;
+                _isMovingToClickPosition = true;
             }
             else
             {
-                // 클릭 위치로 이동 또는 공격
-                _playerCharacter.Attack(targetPosition.Value);
-
-                // 공격 범위 밖이면 이동 설정
-                if (distanceToTarget > 2f) // attackRange와 동기화 필요
-                {
-                    _lastClickPosition = targetPosition.Value;
-                    _isMovingToClickPosition = true;
-                }
+                // 공격 범위 내면 이동하지 않음
+                _isMovingToClickPosition = false;
             }
 
             OnAttackRequested?.Invoke(targetPosition.Value);
@@ -240,6 +265,25 @@ public class PlayerController : MonoBehaviour
             if (enableDebugInput)
             {
                 Debug.Log($"[{nameof(PlayerController)}] Attack requested at: {targetPosition.Value}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// 🔧 추가: 공격 종료 처리
+    /// </summary>
+    private void HandleAttackCompletion()
+    {
+        if (!_isAttacking || _playerCharacter == null) return;
+
+        // 공격 애니메이션이 끝났는지 확인
+        if (_playerCharacter.IsAttackComplete())
+        {
+            _isAttacking = false;
+
+            if (enableDebugInput)
+            {
+                Debug.Log($"[{nameof(PlayerController)}] Attack completed");
             }
         }
     }
@@ -255,6 +299,7 @@ public class PlayerController : MonoBehaviour
 
         // 클릭 이동 취소
         _isMovingToClickPosition = false;
+        _isAttacking = false; // 🔧 공격 상태도 해제
 
         // _playerCharacter.UseSkill(skillNumber);
         OnSkillRequested?.Invoke(skillNumber);
@@ -294,6 +339,11 @@ public class PlayerController : MonoBehaviour
     /// 스프린트 상태를 반환합니다
     /// </summary>
     public bool IsSprintHeld() => _isSprintHeld;
+
+    /// <summary>
+    /// 공격 중인지 확인합니다
+    /// </summary>
+    public bool IsAttacking() => _isAttacking;
 
     /// <summary>
     /// 클릭 이동 중인지 확인합니다
@@ -337,6 +387,12 @@ public class PlayerController : MonoBehaviour
         {
             Debug.DrawLine(playerPos, _lastClickPosition, Color.yellow);
         }
+
+        // 공격 범위 표시 (주황색)
+        DrawWireCircle(playerPos, attackRange, Color.cyan);
+
+        // 디버그 정보 표시
+        Debug.Log($"[Sprint: {_isSprintHeld}] [Attacking: {_isAttacking}] [Moving: {_isMovingToClickPosition}]");
     }
 
     /// <summary>
