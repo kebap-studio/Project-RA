@@ -256,7 +256,7 @@ public class PlayerController : MonoBehaviour
         // 클릭 이동 취소
         _isMovingToClickPosition = false;
 
-        _playerCharacter.UseSkill(skillNumber);
+        // _playerCharacter.UseSkill(skillNumber);
         OnSkillRequested?.Invoke(skillNumber);
 
         if (enableDebugInput)

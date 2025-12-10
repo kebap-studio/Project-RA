@@ -2,39 +2,51 @@
 
 
 /// <summary>
-/// Player가 조작하는 캐릭터의 구현체
+/// SaDo 캐릭터 - 플레이어가 조작하는 메인 캐릭터 (완전 대체)
 /// </summary>
-[RequireComponent(typeof(CharacterController), typeof(Animator))]
+[RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(Animator))]
 public class PlayerCharacter : Character
 {
-    [Header("Movement Settings")]
-    [SerializeField] private float baseSpeed = 2f;
-    [SerializeField] private float sprintMultiplier = 1.5f;
-
-    [Header("Rotation Settings")]
-    [SerializeField] private float rotationSpeed = 10f;
-
+    #region SaDo 스탯 설정
+    
+    [Header("=== SaDo Character Stats ===")]
+    [SerializeField] private float baseSpeed = 3.5f;
+    [SerializeField] private float sprintMultiplier = 1.8f;
+    [SerializeField] private float rotationSpeed = 12f;
+    
     [Header("Combat Settings")]
-    [SerializeField] private float attackRange = 2f;
+    [SerializeField] private float attackRange = 2.5f;
+    [SerializeField] private float attackCooldown = 0.8f;
+    
+    #endregion
 
-    // Components
-    CharacterController _characterController;
-    Animator _animator;
+    #region Components
+    
+    private CharacterController _characterController;
+    private Animator _animator;
+    
+    #endregion
 
-    // Movement
+    #region Movement & State
+    
     private Vector3 _currentVelocity;
     private Vector3 _targetPosition;
     private bool _isMovingToTarget;
     private bool _isSprinting;
-
-    // Animation IDs 
-    int _animIDMoveSpeed;
-    int _animIDIsMoving;
-    int _animIDIsAttack;
-    int _animIDMotionNum;
-    int _animIDIsSprinting;
-
     private bool _isAttacking;
+    private float _lastAttackTime;
+    
+    #endregion
+
+    #region Animation Parameter IDs (SaDo Animator와 동기화)
+    
+    private int _animIDSpeed;           // 이동 속도 (0-1)
+    private int _animIDIsMoving;        // 이동 중 여부
+    private int _animIDAttack;          // 공격 트리거
+    private int _animIDIsSprinting;     // 스프린트 여부
+    
+    #endregion
 
     #region Unity Lifecycle
 
@@ -42,18 +54,21 @@ public class PlayerCharacter : Character
     {
         base.Awake();
         InitializeComponents();
-        CacheAnimationIDs();
+        CacheAnimationParameters();
+        SetupSaDoDatials();
     }
 
     private void Update()
     {
+        if (!IsAlive()) return;
+
         HandleMovement();
         HandleTargetMovement();
-        UpdateAnimations();
+        UpdateAnimationStates();
     }
 
     #endregion
-    
+
     #region Initialization
 
     private void InitializeComponents()
@@ -61,46 +76,63 @@ public class PlayerCharacter : Character
         _characterController = GetComponent<CharacterController>();
         _animator = GetComponent<Animator>();
 
-        // Character 기본 값 설정
-        moveSpeed = baseSpeed;
-
         if (_characterController == null)
         {
-            Debug.LogError($"[{nameof(PlayerCharacter)}] CharacterController component not found on {gameObject.name}");
+            Debug.LogError($"[SaDo PlayerCharacter] CharacterController component not found!");
         }
 
         if (_animator == null)
         {
-            Debug.LogError($"[{nameof(PlayerCharacter)}] Animator component not found on {gameObject.name}");
+            Debug.LogError($"[SaDo PlayerCharacter] Animator component not found!");
         }
+
+        // Character 기본값 초기화
+        moveSpeed = baseSpeed;
     }
 
-    private void CacheAnimationIDs()
+    private void CacheAnimationParameters()
     {
-        _animIDMoveSpeed = Animator.StringToHash("MoveSpeed");
+        // SaDo Animator의 파라미터명과 동일하게 설정
+        _animIDSpeed = Animator.StringToHash("Speed");
         _animIDIsMoving = Animator.StringToHash("IsMoving");
-        _animIDIsAttack = Animator.StringToHash("IsAttack");
-        _animIDMotionNum = Animator.StringToHash("MotionNum");
+        _animIDAttack = Animator.StringToHash("Attack");
         _animIDIsSprinting = Animator.StringToHash("IsSprinting");
+
+        Debug.Log("[SaDo PlayerCharacter] Animation parameters cached");
+    }
+
+    private void SetupSaDoDatials()
+    {
+        // SaDo 캐릭터 고유 설정
+        maxHealth = 150f;
+        attackPower = 15f;
+        
+        // 테그 설정 (필요시)
+        gameObject.tag = "Player";
+        
+        Debug.Log($"[SaDo PlayerCharacter] Initialized - Health: {maxHealth}, Speed: {baseSpeed}, Attack Power: {attackPower}");
     }
 
     #endregion
 
-    #region Character Implementation
+    #region Character Implementation (Character 추상 클래스 구현)
 
+    /// <summary>
+    /// SaDo가 지정된 방향으로 이동합니다
+    /// </summary>
     public override void Move(Vector3 direction)
     {
-        Debug.Log($"<color=cyan>[PlayerCharacter.Move] Called with direction: {direction}</color>");
+        // 공격 중이거나 클릭 이동 중일 때는 입력 무시
         if (_isAttacking || _isMovingToTarget)
         {
-            
-            Debug.LogWarning($"<color=red>[PlayerCharacter.Move] BLOCKED - isAttacking: {_isAttacking}, isMovingToTarget: {_isMovingToTarget}</color>");
             return;
         }
 
-        float currentSpeed = _isSprinting ? moveSpeed * sprintMultiplier : moveSpeed;
+        // 스프린트 속도 적용
+        float currentSpeed = _isSprinting ? baseSpeed * sprintMultiplier : baseSpeed;
         _currentVelocity = direction * currentSpeed;
 
+        // 이동 방향으로 회전
         if (direction.magnitude > 0.1f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(direction);
@@ -108,98 +140,91 @@ public class PlayerCharacter : Character
         }
     }
 
+    /// <summary>
+    /// SaDo가 지정된 위치를 공격합니다
+    /// </summary>
     public override void Attack(Vector3 targetPosition)
     {
         if (_isAttacking || !IsAlive()) return;
 
+        // 공격 쿨타임 체크
+        if (Time.time - _lastAttackTime < attackCooldown)
+        {
+            return;
+        }
+
         float distanceToTarget = Vector3.Distance(transform.position, targetPosition);
 
+        // 공격 범위 내: 즉시 공격
         if (distanceToTarget <= attackRange)
         {
-            // 타겟 방향으로 회전
-            Vector3 lookDirection = (targetPosition - transform.position).normalized;
-            if (lookDirection != Vector3.zero)
-            {
-                transform.rotation = Quaternion.LookRotation(lookDirection);
-            }
-            
-            // 즉시 공격
-            PerformAttack();
+            PerformAttack(targetPosition);
         }
+        // 공격 범위 밖: 이동 후 공격
         else
         {
-            // 타겟 위치로 이동 후 공격
             MoveToTarget(targetPosition);
-        }
-    }
-
-    public override void TakeDamage(float damage)
-    {
-        if (!IsAlive()) return;
-
-        base.TakeDamage(damage);
-
-        if (_animator != null)
-        {
-            // _animator.SetTrigger("TakeDamage");
         }
     }
 
     public override void Die()
     {
+        if (isDead) return;
+
         base.Die();
 
+        // 모든 상태 초기화
         StopMovement();
         _isAttacking = false;
+        _isMovingToTarget = false;
 
-        if (_animator != null)
-        {
-            // _animator.SetTrigger("Die");
-        }
+        // 사망 애니메이션 (필요시 구현)
+        // _animator?.SetTrigger("Die");
+
+        Debug.Log($"[SaDo PlayerCharacter] SaDo has fallen in battle");
     }
 
     #endregion
-    
-    #region Skills
 
-    /// <summary>
-    /// 스킬을 사용합니다
-    /// </summary>
-    public void UseSkill(int skillNumber)
+    #region Attack System
+
+    private void PerformAttack(Vector3 targetPosition)
     {
-        if (_animator == null || _isAttacking || !IsAlive()) return;
+        if (_animator == null || !IsAlive()) return;
 
-        if (IsMoving()) StopMovement();
+        // 대상 방향으로 회전
+        Vector3 lookDirection = (targetPosition - transform.position).normalized;
+        if (lookDirection != Vector3.zero)
+        {
+            transform.rotation = Quaternion.LookRotation(lookDirection);
+        }
 
+        // 공격 상태 설정
         _isAttacking = true;
+        _lastAttackTime = Time.time;
+        _currentVelocity = Vector3.zero;
 
-        // 스킬 애니메이션 트리거
-        // _animator.SetBool(_animIDIsAttack, true);
-        // _animator.SetInteger(_animIDMotionNum, skillNumber);
+        // 공격 애니메이션 트리거
+        _animator.SetTrigger(_animIDAttack);
+
+        Debug.Log($"[SaDo PlayerCharacter] Attack! Power: {attackPower}");
     }
 
-    public void SetSprint(bool isSprinting)
+    private void MoveToTarget(Vector3 targetPosition)
     {
-        _isSprinting = isSprinting;
-        
-        if (_animator != null)
-        {
-            _animator.SetBool(_animIDIsSprinting, _isSprinting);
-        }
+        _targetPosition = targetPosition;
+        _isMovingToTarget = true;
+        Debug.Log($"[SaDo PlayerCharacter] Moving to target: {targetPosition}");
     }
 
     #endregion
 
-    #region Movement
+    #region Movement System
 
     private void HandleMovement()
     {
-        if (_characterController == null) 
-        {
-            Debug.LogError("[PlayerCharacter] CharacterController is NULL!");
-            return;
-        }
-        
+        if (_characterController == null) return;
+
         _characterController.Move(_currentVelocity * Time.deltaTime);
     }
 
@@ -209,117 +234,115 @@ public class PlayerCharacter : Character
 
         float distanceToTarget = Vector3.Distance(transform.position, _targetPosition);
 
-        if (distanceToTarget <= 0.1f)
+        // 목표 도달
+        if (distanceToTarget <= 0.2f)
         {
             _isMovingToTarget = false;
             _currentVelocity = Vector3.zero;
-            PerformAttack();
+            PerformAttack(_targetPosition);
         }
         else
         {
+            // 목표로 이동
             Vector3 direction = (_targetPosition - transform.position).normalized;
-            float currentSpeed = _isSprinting ? moveSpeed * sprintMultiplier : moveSpeed;
+            float currentSpeed = _isSprinting ? baseSpeed * sprintMultiplier : baseSpeed;
             _currentVelocity = direction * currentSpeed;
 
+            // 이동 방향으로 회전
             Quaternion targetRotation = Quaternion.LookRotation(direction);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
     }
 
-    private void MoveToTarget(Vector3 targetPosition)
+    public void StopMovement()
     {
-        _targetPosition = targetPosition;
-        _isMovingToTarget = true;
-    }
-
-    private void PerformAttack()
-    {
-        if (_animator == null || !IsAlive()) return;
-
-        // _isAttacking = true;
-        // _animator.SetBool(_animIDIsAttack, true);
-        // _animator.SetInteger(_animIDMotionNum, 0); // 기본 공격
+        _currentVelocity = Vector3.zero;
+        _isMovingToTarget = false;
     }
 
     #endregion
 
-    #region Animation
+    #region Sprint System
 
-    private void UpdateAnimations()
+    public void SetSprint(bool isSprinting)
+    {
+        _isSprinting = isSprinting;
+
+        if (_animator != null)
+        {
+            _animator.SetBool(_animIDIsSprinting, _isSprinting);
+        }
+
+        Debug.Log($"[SaDo PlayerCharacter] Sprint: {(_isSprinting ? "ON" : "OFF")}");
+    }
+
+    #endregion
+
+    #region Animation System
+
+    private void UpdateAnimationStates()
     {
         if (_animator == null) return;
 
+        // 이동 상태
         bool isMoving = IsMoving();
         float normalizedSpeed = GetNormalizedSpeed();
 
-        // _animator.SetBool(_animIDIsMoving, isMoving);
-        // _animator.SetFloat(_animIDMoveSpeed, normalizedSpeed);
+        _animator.SetBool(_animIDIsMoving, isMoving);
+        _animator.SetFloat(_animIDSpeed, normalizedSpeed);
+
+        // 스프린트 상태는 SetSprint에서 처리
     }
 
     #endregion
 
-    #region Public Methods
+    #region Public Methods - State Queries
 
-    public void StopMovement()
-    {
-    }
-
-    /// <summary>
-    /// 현재 이동 중인지 확인합니다
-    /// </summary>
     public bool IsMoving() => _currentVelocity.magnitude > 0.1f;
 
-    /// <summary>
-    /// 정규화된 이동 속도를 반환합니다 (0-1)
-    /// </summary>
+    public bool IsAttacking() => _isAttacking;
+
+    public bool IsSprinting() => _isSprinting;
+
+    public Vector3 GetVelocity() => _currentVelocity;
+
     public float GetNormalizedSpeed()
     {
-        float currentMaxSpeed = _isSprinting ? moveSpeed * sprintMultiplier : moveSpeed;
+        float currentMaxSpeed = _isSprinting ? baseSpeed * sprintMultiplier : baseSpeed;
         return currentMaxSpeed > 0 ? Mathf.Clamp01(_currentVelocity.magnitude / currentMaxSpeed) : 0f;
     }
 
-    /// <summary>
-    /// 현재 속도를 반환합니다
-    /// </summary>
-    public Vector3 GetVelocity() => _currentVelocity;
-
-    /// <summary>
-    /// 공격 중인지 확인합니다
-    /// </summary>
-    public bool IsAttacking() => _isAttacking;
-
-    /// <summary>
-    /// 스프린트 중인지 확인합니다
-    /// </summary>
-    public bool IsSprinting() => _isSprinting;
-
     #endregion
 
-    #region Animation Events
+    #region Animation Events (Animator에서 호출)
 
     /// <summary>
-    /// 애니메이션에서 호출되는 공격 완료 이벤트
-    /// </summary>
-    public void OnAttackComplete()
-    {
-        if (_animator == null) return;
-
-        _isAttacking = false;
-        _animator.SetBool(_animIDIsAttack, false);
-    }
-
-    /// <summary>
-    /// 애니메이션에서 호출되는 공격 히트 이벤트
+    /// 공격 애니메이션의 공격 판정 프레임에서 호출
     /// </summary>
     public void OnAttackHit()
     {
-        // 실제 데미지 처리 로직
         ProcessAttackHit();
+    }
+
+    /// <summary>
+    /// 공격 애니메이션 종료 시 호출
+    /// </summary>
+    public void OnAttackComplete()
+    {
+        _isAttacking = false;
+
+        if (_animator != null)
+        {
+            // 공격 완료 후 대기 상태로 복귀
+            _animator.ResetTrigger(_animIDAttack);
+        }
+
+        Debug.Log("[SaDo PlayerCharacter] Attack complete");
     }
 
     private void ProcessAttackHit()
     {
-        // 공격 범위 내의 적들을 찾아서 데미지 처리
+        // 공격 범위 내의 적 찾기
         Collider[] hitColliders = Physics.OverlapSphere(transform.position, attackRange);
 
         foreach (var collider in hitColliders)
@@ -330,10 +353,21 @@ public class PlayerCharacter : Character
                 if (enemy != null && enemy != this)
                 {
                     enemy.TakeDamage(GetAttackPower());
-                    Debug.Log($"[{nameof(PlayerCharacter)}] Hit {enemy.name} for {GetAttackPower()} damage");
+                    Debug.Log($"[SaDo PlayerCharacter] Hit {enemy.name} for {GetAttackPower()} damage");
                 }
             }
         }
+    }
+
+    #endregion
+
+    #region Debug
+
+    private void OnDrawGizmosSelected()
+    {
+        // 공격 범위 시각화
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, attackRange);
     }
 
     #endregion
