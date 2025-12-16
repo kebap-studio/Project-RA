@@ -90,7 +90,7 @@ public class MosterCharacter : Character
         if (_currentState.GetEStateType() == EStateType.MOVE)
         {
             // 플레이어의 거리가 가까우면 추적상태
-            if (Vector3.Distance(playerPosition, transform.position) < 100.0f)
+            if (Vector3.Distance(playerPosition, transform.position) < 20.0f)
             {
                 UpdateState(chaseState);
             }
@@ -106,13 +106,11 @@ public class MosterCharacter : Character
         else if (_currentState.GetEStateType() == EStateType.CHASE)
         {
             // 플레이어의 거리가 멀어지면 잠깐 멈춘다.
-            if (Vector3.Distance(playerPosition, transform.position) > 100.0f)
+            if (Vector3.Distance(playerPosition, transform.position) > 20.0f)
             {
                 UpdateState(idleState);
             }
         }
-
-        // stateContext.GetState().UpdateState();
     }
 
     #endregion

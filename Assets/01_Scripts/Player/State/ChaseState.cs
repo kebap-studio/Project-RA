@@ -1,9 +1,11 @@
 using System.Collections;
 using UnityEngine;
 using System;
+using UnityEngine.AI;
 
 public class ChaseState : MonoBehaviour, IState
 {
+    private NavMeshAgent _navMeshAgent;
     private AStateContext _stateContenxt;
     public Action onFinished;
 
@@ -12,6 +14,7 @@ public class ChaseState : MonoBehaviour, IState
         _stateContenxt = stateContext;
         if (func != null)
             onFinished += func;
+        _navMeshAgent = GetComponent<NavMeshAgent>();
     }
 
     public EStateType GetEStateType()
@@ -36,20 +39,17 @@ public class ChaseState : MonoBehaviour, IState
             // 플레이어 체크 : GameManager에서 변수로 등록해두면 바로 들고올수 있어 좋을거 같긴한다. readonly로
             var player = GameObject.FindWithTag("Player");
             var playerPosition = player.transform.position;
+            Vector3 curPoint = _stateContenxt._current.transform.position;
             
-            if (Vector3.Distance(playerPosition, _stateContenxt._current.transform.position) < 4.0f)
+            if (Vector3.Distance(playerPosition, curPoint) < 2.0f)
             {
                 onFinished?.Invoke();
+                _navMeshAgent.SetDestination(curPoint);
                 yield break;
             }
             else
             {
-                Quaternion newRotation = Quaternion.LookRotation(playerPosition);
-                _stateContenxt._current.transform.rotation = newRotation;
-
-                Vector3 curPoint = _stateContenxt._current.transform.position;
-                Vector3 newPoint = Vector3.MoveTowards(curPoint, playerPosition, _stateContenxt._current.GetMoveSpeed() * Time.deltaTime);
-                _stateContenxt._current.transform.position = newPoint;
+                _navMeshAgent.SetDestination(playerPosition);
             }
 
             yield return null;
