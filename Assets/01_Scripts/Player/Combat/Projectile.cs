@@ -52,23 +52,35 @@ public class Projectile : MonoBehaviour, IStriker
         // 이전 위치에서 다음 위치까지 미리 Ray를 쏴서 확인 (Continuous Detection)
         Ray ray = new Ray(_previousPosition, direction);
         int count = Physics.SphereCastNonAlloc(ray, radius, _tempHits, moveDistance, targetLayer);
+
+        bool isObstacle = false;
         if (count > 0)
         {
             for (int i = 0; i < count; i++)
             {
-                int id = _tempHits[i].collider.gameObject.GetInstanceID();
-                if (_hitObjects.Add(id))
+                // 장애물 처리 => 장애물이랑 접촉하면 바로 종료보다는 넉넉하게 충돌처리 다하고 종료되도록 해보는 방안?
+                // 일단 비트연산인데 가독성 좋게 LayoutMask사용방법 알아서 바꿔야됨
+                if (targetLayer.value == 1 << 10)
                 {
-                    Debug.LogFormat($"{id}에게 데미지를 입혔습니다.");
+                    isObstacle = true;
                 }
-                
-                if (_hitObjects.Count >= maxTargets)
+
+                if (_hitObjects.Count < maxTargets)
                 {
-                    OnFinished();
-                    Destroy(gameObject);
-                    return;
+                    int id = _tempHits[i].collider.gameObject.GetInstanceID();
+                    if (_hitObjects.Add(id))
+                    {
+                        Debug.LogFormat($"{id}에게 데미지를 입혔습니다.");
+                    }
                 }
             }
+        }
+                
+        if (_hitObjects.Count >= maxTargets || isObstacle)
+        {
+            OnFinished();
+            Destroy(gameObject);
+            return;
         }
         
         transform.Translate(Vector3.forward * moveDistance);
