@@ -3,7 +3,7 @@ using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class DieState : MonoBehaviour, IState
+public class HittedState : MonoBehaviour, IState
 {
     private AStateContext _stateContenxt;
     public Action onFinished;
@@ -17,7 +17,7 @@ public class DieState : MonoBehaviour, IState
 
     public EStateType GetEStateType()
     {
-        return EStateType.DIE;
+        return EStateType.HITTED;
     }
 
     public void EnterState()
@@ -32,7 +32,7 @@ public class DieState : MonoBehaviour, IState
 
     public IEnumerator UpdateState()
     {
-        // 사망 애니메이션 실행을 위해 잠깐 정지 시킨다.
+        // Hitted이면 애니메이션 실행을 위해 잠깐 정지 시킨다.
         yield return new WaitForSeconds(1.0f);
         onFinished?.Invoke();
     }

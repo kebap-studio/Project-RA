@@ -196,54 +196,7 @@ public class MosterCharacter : Character
     }
 
     #endregion
-
-    #region Animation Events (Animator에서 호출)
-
-    /// <summary>
-    /// 공격 애니메이션의 공격 판정 프레임에서 호출
-    /// </summary>
-    public void OnAttackHit()
-    {
-        ProcessAttackHit();
-    }
-
-    /// <summary>
-    /// 공격 애니메이션 종료 시 호출
-    /// </summary>
-    public void OnAttackComplete()
-    {
-        _isAttacking = false;
-
-        if (_animator != null)
-        {
-            // 공격 완료 후 대기 상태로 복귀
-            _animator.ResetTrigger(_animIDAttack);
-        }
-
-        Debug.Log("[Monster PlayerCharacter] Attack complete");
-    }
-
-    private void ProcessAttackHit()
-    {
-        // 공격 범위 내의 적 찾기
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, attackRange);
-
-        foreach (var collider in hitColliders)
-        {
-            if (collider.CompareTag("Player"))
-            {
-                var enemy = collider.GetComponent<Character>();
-                if (enemy != null && enemy != this)
-                {
-                    enemy.TakeDamage(GetAttackPower());
-                    Debug.Log($"[Monster PlayerCharacter] Hit {enemy.name} for {GetAttackPower()} damage");
-                }
-            }
-        }
-    }
-
-    #endregion
-
+    
     #region Debug
 
     private void OnDrawGizmosSelected()
