@@ -124,7 +124,7 @@ public class GameManager : MonoBehaviour
         if (isPaused) return;
 
         // 죽었으면 게임 종료(게임 오버)
-        if (playerObject != null && !playerObject.GetCurrentHp())
+        if (playerObject != null && playerObject.GetCurrentHp() <= 0)
         {
             EndGameDead();
         }
@@ -146,7 +146,7 @@ public class GameManager : MonoBehaviour
     {
         // 플레이어는 죽어도 인스턴스를 유지한다면? -> 이벤트 구독 해제
         // 파괴된다면 밑 코드는 삭제해도 무방
-        playerObject.OnDead -= HandlePlayerDead;
+        playerObject.OnDeath -= HandlePlayerDead;
     }
 
     // =========================
@@ -205,8 +205,11 @@ public class GameManager : MonoBehaviour
         }
 
         // 게임 끝나면 남은 적 전부 제거
-        foreach (var e in FindObjectsByType<enemyPrefabScript>(FindObjectsSortMode.None))
-            Destroy(e.gameObject);
+        // 수정자: 김성민
+        // enemyPrefabScript가 존재하지 않아 오류가 발생해서 임시로 주석처리 했습니다. 
+        // enemyPrefabScript가 해결될 경우 주석 해제
+        // foreach (var e in FindObjectsByType<enemyPrefabScript>(FindObjectsSortMode.None))
+        //     Destroy(e.gameObject);
     }
 
     // =========================
@@ -241,9 +244,9 @@ public class GameManager : MonoBehaviour
         }
 
         Vector3 pos = GetRandomPositionInMap();
-        GameObject player = Instantiate(playerObject, pos, Quaternion.identity);
+        GameObject player = Instantiate(playerObject, pos, Quaternion.identity).gameObject;
         if (player != null){
-            player.OnDead += EndGameDead;
+            player.GetComponent<PlayerCharacter>().OnDeath += EndGameDead;
         }
         else {
             Debug.Log("Player Spawn Failed!");
@@ -263,7 +266,7 @@ public class GameManager : MonoBehaviour
         Vector3 pos = GetRandomPositionInMap();
         GameObject enemy = Instantiate(enemyPrefab, pos, Quaternion.identity);
         if (enemy != null){
-            enemy.OnDead += RegisterMonsterKilled;
+            enemy.GetComponent<MonsterCharacter>().OnDeath += RegisterMonsterKilled;
         }
         else {
             Debug.Log("Enemy Spawn Failed!");
@@ -276,5 +279,11 @@ public class GameManager : MonoBehaviour
         float x = Random.Range(-mapHalfSize.x, mapHalfSize.x);
         float z = Random.Range(-mapHalfSize.y, mapHalfSize.y);
         return new Vector3(x, spawnY, z);
+    }
+    
+    // 임시 함수 
+    private void HandlePlayerDead()
+    {
+
     }
 }

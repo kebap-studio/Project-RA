@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 
 /// <summary>
@@ -9,43 +10,49 @@
 public class PlayerCharacter : Character
 {
     #region SaDo 스탯 설정
-    
-    [Header("=== SaDo Character Stats ===")]
+
+    [Header("Player Stats")]
+    [SerializeField] private int maxHp = 10;
+    [SerializeField] private int currentHp;
+    [SerializeField] private float moveSpeed = 6f;
     [SerializeField] private float baseSpeed = 3.5f;
     [SerializeField] private float sprintMultiplier = 1.8f;
     [SerializeField] private float rotationSpeed = 12f;
-    
+
     [Header("Combat Settings")]
     [SerializeField] private float attackRange = 2.5f;
     [SerializeField] private float attackCooldown = 0.8f;
-    
+
+    [Header("Inventory")]
+    [SerializeField] private List<Item> itemList = new List<Item>();
+
     #endregion
 
     #region Components
-    
+
     private CharacterController _characterController;
     private Animator _animator;
-    
+
     #endregion
 
     #region Movement & State
-    
+
     private Vector3 _currentVelocity;
     private Vector3 _targetPosition;
     private bool _isMovingToTarget;
     private bool _isSprinting;
     private bool _isAttacking;
     private float _lastAttackTime;
-    
+
     #endregion
 
     #region Animation Parameter IDs (SaDo Animator와 동기화)
-    
-    private int _animIDSpeed;           // 이동 속도 (0-1)
-    private int _animIDIsMoving;        // 이동 중 여부
-    private int _animIDAttack;          // 공격 트리거
-    private int _animIDIsSprinting;     // 스프린트 여부
-    
+
+    private int _animIDSpeed; // 이동 속도 (0-1)
+    private int _animIDIsMoving; // 이동 중 여부
+    private int _animIDAttack; // 공격 트리거
+    private int _animIDIsSprinting; // 스프린트 여부
+
     #endregion
 
     #region Unity Lifecycle
@@ -87,6 +94,7 @@ public class PlayerCharacter : Character
         }
 
         // Character 기본값 초기화
+        currentHp = maxHp;
         moveSpeed = baseSpeed;
     }
 
@@ -106,11 +114,12 @@ public class PlayerCharacter : Character
         // SaDo 캐릭터 고유 설정
         maxHealth = 150f;
         attackPower = 15f;
-        
+
         // 테그 설정 (필요시)
         gameObject.tag = "Player";
-        
-        Debug.Log($"[SaDo PlayerCharacter] Initialized - Health: {maxHealth}, Speed: {baseSpeed}, Attack Power: {attackPower}");
+
+        Debug.Log(
+            $"[SaDo PlayerCharacter] Initialized - Health: {maxHealth}, Speed: {baseSpeed}, Attack Power: {attackPower}");
     }
 
     #endregion
@@ -225,7 +234,7 @@ public class PlayerCharacter : Character
         if (_animator == null) return false;
 
         AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo(0);
-    
+
         // Attack 상태가 아니거나 애니메이션이 끝났으면 true
         if (!stateInfo.IsName("Attack"))
         {
@@ -236,8 +245,6 @@ public class PlayerCharacter : Character
         return stateInfo.normalizedTime >= 1.0f;
     }
 
-    
-    
     #endregion
 
     #region Movement System
@@ -288,7 +295,7 @@ public class PlayerCharacter : Character
     public void SetSprint(bool isSprinting)
     {
         _isSprinting = isSprinting;
-    
+
         if (_animator != null)
         {
             _animator.SetBool(_animIDIsSprinting, isSprinting);
@@ -329,6 +336,45 @@ public class PlayerCharacter : Character
     {
         float currentMaxSpeed = _isSprinting ? baseSpeed * sprintMultiplier : baseSpeed;
         return currentMaxSpeed > 0 ? Mathf.Clamp01(_currentVelocity.magnitude / currentMaxSpeed) : 0f;
+    }
+
+    public void TakeDamage(int damage)
+    {
+        currentHp -= damage;
+        currentHp = Mathf.Max(currentHp, 0);
+
+        Debug.Log($"플레이어 피해: {damage}, 현재 HP: {currentHp}");
+
+        if (currentHp == 0)
+        {
+            Die();
+        }
+    }
+
+    public int GetCurrentHp()
+    {
+        return currentHp;
+    }
+
+    public float GetMoveSpeed()
+    {
+        return moveSpeed;
+    }
+
+    public float GetAttackRange()
+    {
+        return attackRange;
+    }
+
+    // 아이템 관련 로직
+    public void AddItem(Item item)
+    {
+        itemList.Add(item);
+    }
+
+    public List<Item> GetItemList()
+    {
+        return itemList;
     }
 
     #endregion

@@ -7,7 +7,7 @@ using UnityEngine;
 /// 기본 몬스터 - 1 캐릭터 - AI로 조작하는 메인 몬스터
 /// </summary>
 [RequireComponent(typeof(Animator))]
-public class MosterCharacter : Character
+public class MonsterCharacter : Character
 {
     #region 기본 몬스터 - 1 스탯 설정
     
