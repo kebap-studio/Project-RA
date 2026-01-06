@@ -6,7 +6,6 @@ using UnityEngine;
 /// <summary>
 /// 기본 몬스터 - 1 캐릭터 - AI로 조작하는 메인 몬스터
 /// </summary>
-[RequireComponent(typeof(Animator))]
 public class MonsterCharacter : Character
 {
     #region 기본 몬스터 - 1 스탯 설정
@@ -155,14 +154,6 @@ public class MonsterCharacter : Character
 
     #endregion
 
-    #region Character Implementation (Character 추상 클래스 구현)
-
-    public override void Move(Vector3 direction){}
-    public override void Attack(Vector3 targetPosition){}
-    public override void Die(){}
-
-    #endregion
-
     #region State System
 
     private void UpdateState(IState state)
@@ -193,17 +184,6 @@ public class MonsterCharacter : Character
     {
         float currentMaxSpeed = _isSprinting ? baseSpeed * sprintMultiplier : baseSpeed;
         return currentMaxSpeed > 0 ? Mathf.Clamp01(_currentVelocity.magnitude / currentMaxSpeed) : 0f;
-    }
-
-    #endregion
-    
-    #region Debug
-
-    private void OnDrawGizmosSelected()
-    {
-        // 공격 범위 시각화
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackRange);
     }
 
     #endregion
