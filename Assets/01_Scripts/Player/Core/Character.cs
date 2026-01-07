@@ -14,9 +14,11 @@ public abstract class Character : MonoBehaviour
     [SerializeField] protected float attackPower = 10f;
     [SerializeField] protected bool isDead = false;
 
-    // Events
+    #region Events
     public event Action<float> OnHealthChanged;
     public event Action OnDeath;
+    
+    #endregion
 
     #region Unity Lifecycle
 
@@ -25,22 +27,6 @@ public abstract class Character : MonoBehaviour
         // 시작 시 현재 체력을 최대 체력으로 설정
         currentHealth = maxHealth;
     }
-
-    #endregion
-
-    #region Abstract Methods
-
-    /// <summary>
-    /// 캐릭터를 지정된 방향으로 이동시킵니다
-    /// </summary>
-    /// <param name="direction">이동할 방향 벡터</param>
-    public abstract void Move(Vector3 direction);
-
-    /// <summary>
-    /// 지정된 위치를 공격합니다
-    /// </summary>
-    /// <param name="targetPosition">공격할 대상 위치</param>
-    public abstract void Attack(Vector3 targetPosition);
 
     #endregion
 

@@ -17,22 +17,31 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float maxInteractionDistance = 100f;
     [SerializeField] private float attackRange = 2f; // 공격 범위 추가
 
-    // Components
+    #region Components
+    
     private PlayerCharacter _playerCharacter;
     private Camera _mainCamera;
     private PlayerInput _playerInput;
+    
+    #endregion
 
-    // Input Values
+    #region Input Values
+    
     private Vector2 _moveInput;
     private bool _isSprintHeld;
     private bool _isAttacking; // 🔧 공격 상태 추가
 
-    // Events
+    #endregion
+
+    #region Events
+    
     public static event Action<Vector2> OnMoveInputChanged;
+    public static event Action<Vector2> OnLookInputChanged;
     public static event Action<Vector3> OnAttackRequested;
     public static event Action<int> OnSkillRequested;
     public static event Action<bool> OnSprintChanged;
 
+    #endregion 
 
     #region Unity Lifecycle
 
@@ -67,6 +76,7 @@ public class PlayerController : MonoBehaviour
     {
         // 모든 구독자 해제
         OnMoveInputChanged = null;
+        OnLookInputChanged = null;
         OnAttackRequested = null;
         OnSkillRequested = null;
         OnSprintChanged = null;
@@ -167,7 +177,8 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void OnSprint(InputValue value)
     {
-        _isSprintHeld = value.Get<float>() > 0.5; // Press/Release 자동 처리
+        // Press/Release 자동 처리
+        _isSprintHeld = value.Get<float>() > 0.5;
         
         if (_playerCharacter != null)
         {

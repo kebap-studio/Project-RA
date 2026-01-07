@@ -102,7 +102,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 1, z: 0}
 --- !u!114 &5535641941967474631
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -120,11 +120,14 @@ MonoBehaviour:
   moveSpeed: 2
   attackPower: 10
   isDead: 0
+  maxHp: 10
+  currentHp: 0
   baseSpeed: 3.5
   sprintMultiplier: 1.8
   rotationSpeed: 12
   attackRange: 2.5
   attackCooldown: 0.8
+  itemList: []
 --- !u!114 &6933925608313471582
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -142,6 +145,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   maxInteractionDistance: 100
+  attackRange: 2
 --- !u!114 &3918228602890038939
 MonoBehaviour:
   m_ObjectHideFlags: 0
