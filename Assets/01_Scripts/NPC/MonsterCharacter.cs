@@ -147,7 +147,7 @@ public class MonsterCharacter : Character
         attackPower = 15f;
         
         // 테그 설정 (필요시)
-        gameObject.tag = "Monster";
+        // gameObject.tag = "Monster";
         
         Debug.Log($"[Monster PlayerCharacter] Initialized - Health: {maxHealth}, Speed: {baseSpeed}, Attack Power: {attackPower}");
     }

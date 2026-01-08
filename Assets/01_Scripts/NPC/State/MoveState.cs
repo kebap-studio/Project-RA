@@ -42,7 +42,8 @@ public class MoveState : MonoBehaviour, IState
             if (Vector3.Distance(curPoint, nextPoint) < 0.1f)
             {
                 nextPoint = SetRandomDestination(curPoint);
-                _navMeshAgent.SetDestination(nextPoint);
+                if (_navMeshAgent != null && _navMeshAgent.isOnNavMesh)
+                    _navMeshAgent.SetDestination(nextPoint);
             }
 
             yield return null;
