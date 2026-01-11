@@ -147,10 +147,11 @@ public class PlayerCharacter : Character
         float currentSpeed = _isSprinting ? baseSpeed * sprintMultiplier : baseSpeed;
         _currentVelocity = moveDir * currentSpeed;
         
-        Debug.Log($"Move data {_currentVelocity} // {direct} // {lookFoward} !!!!");
-        
-        Quaternion viewRotation = Quaternion.LookRotation(moveDir, Vector3.up);
-        transform.rotation = Quaternion.Lerp(transform.rotation, viewRotation, rotationSpeed * Time.deltaTime);
+        if (moveDir.magnitude > 0.1f)
+        {
+            Quaternion viewRotation = Quaternion.LookRotation(moveDir, Vector3.up);
+            transform.rotation = Quaternion.Lerp(transform.rotation, viewRotation, rotationSpeed * Time.deltaTime);
+        }
     }
     
     /// <summary>
