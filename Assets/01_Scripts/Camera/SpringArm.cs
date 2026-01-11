@@ -1,31 +1,30 @@
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class SpringArm : MonoBehaviour
 {
     [Header("설정")]
-    [SerializeField] private float armLength = 3.0f;
+    [SerializeField] private float armLengthMax = 3.0f;
     [SerializeField] private float mouseSensitivity = 2.0f;
     [SerializeField] private Vector2 pitchLimits = new Vector2(-40f, 60f);
 
     [Header("충돌 설정")]
-    [SerializeField] private float checkRadius = 0.2f;
+    [SerializeField] private float cameraRadius = 0.3f; // 벽 충돌시 최소한 캐릭터 전신이 보이려면, 위에서 볼때 캐릭터 반지름(콜리전)은 보장되면 좋음
     [SerializeField] private LayerMask collisionMask;
     
     [Header("카메라 설정")]
     [SerializeField] private Camera camera;
-    [SerializeField] private Vector3 rotate = new Vector3(10f, 0f, 0f);
     
     private float _curPitch = 0f; 
     private float _curYaw = 0f;
 
     void Awake()
     {
-        if (camera != null)
-        {
-            camera.transform.localPosition = new Vector3(0f, 1f, -1f * armLength);
-        }
-        
+        if (camera == null)
+            camera = GetComponent<Camera>();
+        Assert.IsNotNull(camera);
+        UpdateCameraPoision();
         Cursor.lockState = CursorLockMode.Locked;
         
         // 현재 암(또는 캐릭터)이 바라보는 월드 회전값을 초기 누적값으로 설정
@@ -44,7 +43,7 @@ public class SpringArm : MonoBehaviour
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
         
-        // 뚝뚝 끊기는 현상 발생
+        // 뚝뚝 끊기는 현상 발생 => 변화량으로 변경
         // Vector3 euler = transform.rotation.eulerAngles;
         // float x = euler.x - mouseY;
         // if (x > 360f) x -= 360f;
@@ -63,5 +62,24 @@ public class SpringArm : MonoBehaviour
         _curPitch = Mathf.Clamp(_curPitch, pitchLimits.x, pitchLimits.y);
         
         transform.rotation = Quaternion.Euler(_curPitch, _curYaw, 0);
+
+        UpdateCameraPoision();
+    }
+
+    private void UpdateCameraPoision()
+    {
+        // 벽 충돌시 카메라 물리처리
+        float armLength = armLengthMax;
+        Vector3 armStartPoint = transform.position;
+        Vector3 armEndPoint = camera.transform.position;
+
+        RaycastHit hit;
+        int allLayerMask = ~0;
+        if (Physics.SphereCast(armStartPoint, cameraRadius, (armEndPoint - armStartPoint).normalized, out hit, armLengthMax, allLayerMask))
+        {
+            // 충돌 지점 바로 앞으로 카메라 위치 이동
+            armLength = Vector3.Distance(armStartPoint, hit.point - hit.normal * cameraRadius);
+        }
+        camera.transform.localPosition = new Vector3(0f, 1f, -1f * armLength);
     }
 }
