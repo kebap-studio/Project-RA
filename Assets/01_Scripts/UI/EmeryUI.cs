@@ -4,6 +4,8 @@ using UnityEngine;
 public class EmeryUI : MonoBehaviour
 {
     [SerializeField] private GameObject enemy;
+    // 머리 위 여유분(Y)과 살짝 뒤(Z)
+    [SerializeField] private Vector3 offset = new Vector3(0, 0.5f, -0.2f);
 
     private Transform _uiPosition;
 
@@ -18,8 +20,6 @@ public class EmeryUI : MonoBehaviour
         transform.position = _uiPosition.position;
         transform.LookAt(transform.position - Camera.main.transform.forward, Camera.main.transform.up);
     }
-
-    public Vector3 offset = new Vector3(0, 0.5f, -0.2f); // 머리 위 여유분(Y)과 살짝 뒤(Z)
 
     void Activate(GameObject target)
     {
