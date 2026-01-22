@@ -17,8 +17,8 @@ public class EmeryUI : MonoBehaviour
 
     void LateUpdate()
     {
+        transform.LookAt(Camera.main.transform);
         transform.position = _uiPosition.position;
-        transform.LookAt(transform.position - Camera.main.transform.forward, Camera.main.transform.up);
     }
 
     void Activate(GameObject target)
