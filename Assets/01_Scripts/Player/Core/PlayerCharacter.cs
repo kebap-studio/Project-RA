@@ -14,7 +14,6 @@ public class PlayerCharacter : Character
     [Header("Player Stats")]
     [SerializeField] private int maxHp = 10;
     [SerializeField] private int currentHp;
-    [SerializeField] private float moveSpeed = 6f;
     [SerializeField] private float baseSpeed = 3.5f;
     [SerializeField] private float sprintMultiplier = 1.8f;
     [SerializeField] private float rotationSpeed = 12f;
@@ -25,6 +24,8 @@ public class PlayerCharacter : Character
 
     [Header("Inventory")]
     [SerializeField] private List<Item> itemList = new List<Item>();
+    
+    private float _currentYaw; // 언리얼의 Controller Yaw 역할
 
     #endregion
 
@@ -32,6 +33,7 @@ public class PlayerCharacter : Character
 
     private CharacterController _characterController;
     private Animator _animator;
+    private Camera _camera;
 
     #endregion
 
@@ -82,6 +84,7 @@ public class PlayerCharacter : Character
     {
         _characterController = GetComponent<CharacterController>();
         _animator = GetComponent<Animator>();
+        _camera = Camera.main;
 
         if (_characterController == null)
         {
@@ -129,30 +132,32 @@ public class PlayerCharacter : Character
     /// <summary>
     /// SaDo가 지정된 방향으로 이동합니다
     /// </summary>
-    public override void Move(Vector3 direction)
+    public void Move(Vector3 direct)
     {
         // 공격 중이거나 클릭 이동 중일 때는 입력 무시
         if (_isAttacking || _isMovingToTarget)
         {
             return;
         }
-
-        // 스프린트 속도 적용
+        
+        Vector3 lookFoward = new Vector3(_camera.transform.forward.x, 0, _camera.transform.forward.z).normalized;
+        Vector3 lookRight = new Vector3(_camera.transform.right.x, 0, _camera.transform.right.z).normalized;
+        Vector3 moveDir = lookFoward * direct.z + lookRight * direct.x;
+        
         float currentSpeed = _isSprinting ? baseSpeed * sprintMultiplier : baseSpeed;
-        _currentVelocity = direction * currentSpeed;
-
-        // 이동 방향으로 회전
-        if (direction.magnitude > 0.1f)
+        _currentVelocity = moveDir * currentSpeed;
+        
+        if (moveDir.magnitude > 0.1f)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(direction);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            Quaternion viewRotation = Quaternion.LookRotation(moveDir, Vector3.up);
+            transform.rotation = Quaternion.Lerp(transform.rotation, viewRotation, rotationSpeed * Time.deltaTime);
         }
     }
-
+    
     /// <summary>
     /// SaDo가 지정된 위치를 공격합니다
     /// </summary>
-    public override void Attack(Vector3 targetPosition)
+    public void Attack(Vector3 targetPosition)
     {
         if (_isAttacking || !IsAlive()) return;
 
@@ -258,6 +263,8 @@ public class PlayerCharacter : Character
 
     private void HandleTargetMovement()
     {
+        // 마우스 클릭 <= 버린다. 
+        return;
         if (!_isMovingToTarget) return;
 
         float distanceToTarget = Vector3.Distance(transform.position, _targetPosition);
@@ -365,18 +372,7 @@ public class PlayerCharacter : Character
     {
         return attackRange;
     }
-
-    // 아이템 관련 로직
-    public void AddItem(Item item)
-    {
-        itemList.Add(item);
-    }
-
-    public List<Item> GetItemList()
-    {
-        return itemList;
-    }
-
+    
     #endregion
 
     #region Animation Events (Animator에서 호출)
@@ -422,17 +418,6 @@ public class PlayerCharacter : Character
                 }
             }
         }
-    }
-
-    #endregion
-
-    #region Debug
-
-    private void OnDrawGizmosSelected()
-    {
-        // 공격 범위 시각화
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackRange);
     }
 
     #endregion
