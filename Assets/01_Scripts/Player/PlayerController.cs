@@ -63,8 +63,8 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        ProcessMovementInput();
-        HandleAttackCompletion(); // 🔧 공격 종료 처리 추가
+        // 이동은 PlayerMove에서 처리
+        HandleAttackCompletion();
 
         if (enableDebugInput)
         {
@@ -124,52 +124,17 @@ public class PlayerController : MonoBehaviour
 
     #region Input Processing
 
-    private void ProcessMovementInput()
-    {
-        if (_playerCharacter == null || !_playerCharacter.IsAlive()) return;
-        
-        Vector3 moveDirection = CalculateMovementDirection();
-        _playerCharacter.Move(moveDirection);
-    }
-
-    private Vector3 CalculateMovementDirection()
-    {
-        if (_moveInput.magnitude < 0.1f) return Vector3.zero;
-
-        Vector2 normalizedInput = _moveInput.normalized;
-        return new Vector3(normalizedInput.x, 0f, normalizedInput.y);
-    }
-
-    private Vector3? GetWorldPositionFromMouse()
-    {
-        if (_mainCamera == null) return null;
-
-        Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
-        Ray ray = _mainCamera.ScreenPointToRay(mouseScreenPos);
-
-        if (Physics.Raycast(ray, out RaycastHit hitInfo, maxInteractionDistance, groundLayerMask))
-        {
-            Vector3 worldPos = hitInfo.point;
-            worldPos.y = transform.position.y; // 플레이어 높이에 맞춤
-            return worldPos;
-        }
-
-        return null;
-    }
+    // 이동은 PlayerMove에서 처리
 
     #endregion
 
     #region Input System Events
 
+    // OnMove는 PlayerMove에서 처리 - 이벤트만 발생
     public void OnMove(InputValue value)
     {
         _moveInput = value.Get<Vector2>();
         OnMoveInputChanged?.Invoke(_moveInput);
-
-        if (enableDebugInput)
-        {
-            Debug.Log($"[{nameof(PlayerController)}] Move Input: {_moveInput}");
-        }
     }
 
     /// <summary>
@@ -194,7 +159,7 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// 🔧 수정 2: Attack을 Bool 기반으로 변경
+    /// 3인칭 뷰 - 캐릭터 전방으로 공격
     /// </summary>
     public void OnAttack(InputValue value)
     {
@@ -203,27 +168,19 @@ public class PlayerController : MonoBehaviour
         // 이미 공격 중이면 추가 공격 방지
         if (_isAttacking)
         {
-            if (enableDebugInput)
-            {
-                Debug.Log($"[{nameof(PlayerController)}] Attack already in progress");
-            }
             return;
         }
 
-        Vector3? targetPosition = GetWorldPositionFromMouse();
-        if (targetPosition.HasValue)
+        // 캐릭터 전방으로 공격 (3인칭 뷰)
+        Vector3 targetPosition = transform.position + transform.forward * attackRange;
+
+        _isAttacking = true;
+        _playerCharacter.Attack(targetPosition);
+        OnAttackRequested?.Invoke(targetPosition);
+
+        if (enableDebugInput)
         {
-            float distanceToTarget = Vector3.Distance(transform.position, targetPosition.Value);
-
-            // 공격 시작
-            _isAttacking = true;
-            _playerCharacter.Attack(targetPosition.Value);
-            OnAttackRequested?.Invoke(targetPosition.Value);
-
-            if (enableDebugInput)
-            {
-                Debug.Log($"[{nameof(PlayerController)}] Attack requested at: {targetPosition.Value}");
-            }
+            Debug.Log($"[{nameof(PlayerController)}] Attack forward");
         }
     }
 
@@ -314,29 +271,12 @@ public class PlayerController : MonoBehaviour
         if (_playerCharacter == null) return;
 
         Vector3 playerPos = transform.position;
-        Vector3 moveDirection = CalculateMovementDirection();
-
-        // 이동 방향 표시 (빨간색)
-        if (moveDirection != Vector3.zero)
-        {
-            Debug.DrawRay(playerPos, moveDirection * 2f, Color.red);
-        }
 
         // 플레이어 전방 방향 표시 (파란색)
         Debug.DrawRay(playerPos, transform.forward * 2f, Color.blue);
 
-        // 마우스 위치 표시 (초록색)
-        Vector3? mouseWorldPos = GetWorldPositionFromMouse();
-        if (mouseWorldPos.HasValue)
-        {
-            Debug.DrawLine(playerPos, mouseWorldPos.Value, Color.green);
-        }
-
-        // 공격 범위 표시 (주황색)
+        // 공격 범위 표시 (시안색)
         DrawWireCircle(playerPos, attackRange, Color.cyan);
-
-        // 디버그 정보 표시
-        Debug.Log($"[Sprint: {_isSprintHeld}] [Attacking: {_isAttacking}]");
     }
 
     /// <summary>
