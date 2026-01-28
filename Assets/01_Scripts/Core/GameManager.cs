@@ -105,6 +105,10 @@ public class GameManager : MonoBehaviour
         if (playerObject == null)
             playerObject = FindFirstObjectByType<PlayerCharacter>();
 
+        // 카메라가 인스펙터에 안 들어갔으면 씬에서 찾아보기
+        if (cameraController == null)
+            cameraController = FindFirstObjectByType<CameraController>();
+
         // 플레이어 첫 스폰
         SpawnPlayer();
 
@@ -247,6 +251,10 @@ public class GameManager : MonoBehaviour
         GameObject player = Instantiate(playerObject, pos, Quaternion.identity).gameObject;
         if (player != null){
             player.GetComponent<PlayerCharacter>().OnDeath += EndGameDead;
+
+            // 카메라 타겟 설정
+            if (cameraController != null)
+                cameraController.SetTarget(player.transform);
         }
         else {
             Debug.Log("Player Spawn Failed!");
