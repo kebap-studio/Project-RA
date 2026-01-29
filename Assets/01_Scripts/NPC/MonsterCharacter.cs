@@ -1,6 +1,9 @@
+using System;
 using NUnit.Framework;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.AI;
+using Random = UnityEngine.Random;
 
 
 /// <summary>
@@ -30,7 +33,8 @@ public class MonsterCharacter : Character
 
     #region Components
     
-    private Animator _animator;
+    [SerializeField] private Animator _animator;
+    private NavMeshAgent _navMeshAgent;
     
     #endregion
 
@@ -76,6 +80,13 @@ public class MonsterCharacter : Character
     private void Start()
     {
         stateContext.Init(_currentState);
+        
+        NavMeshAgent agent = GetComponent<NavMeshAgent>();
+        if (agent != null)
+        {
+            agent.obstacleAvoidanceType = ObstacleAvoidanceType.NoObstacleAvoidance;
+            agent.updateRotation = false;
+        }
     }
 
     private void Update()
@@ -89,11 +100,21 @@ public class MonsterCharacter : Character
         if (_currentState.GetEStateType() == EStateType.MOVE)
         {
             // 플레이어의 거리가 가까우면 추적상태
+            RaycastHit hit = new RaycastHit();
             if (Vector3.Distance(playerPosition, transform.position) < 20.0f)
             {
                 UpdateState(chaseState);
+                // Physics.Raycast(transform.position, playerPosition - transform.position, out hit, 20.0f);
+                // if (hit.collider.gameObject.CompareTag("Player"))
+                // {
+                //     UpdateState(chaseState);
+                // }
+                // else
+                // {
+                //     UpdateState(idleState);
+                // }
             }
-            else
+            else 
             {
                 // 이동 or idle
                 if (Random.Range(0, 5) == 0)
@@ -112,17 +133,36 @@ public class MonsterCharacter : Character
         }
     }
 
+    private void LateUpdate()
+    {
+        Vector3 dir = _navMeshAgent.steeringTarget - transform.position;
+        
+        // 예상 도착지점까지 오면 회전은 안해도 이상하지는 않음(사실상 그런 상황 없을듯)
+        if (dir.magnitude > 0.5f)
+        {
+            Quaternion targetRotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir.normalized), Time.deltaTime * _navMeshAgent.angularSpeed);
+            transform.localRotation = targetRotation;
+        }
+    }
+
     #endregion
 
     #region Initialization
 
     private void InitializeComponents()
     {
-        _animator = GetComponent<Animator>();
+        _animator = GetComponentInChildren<Animator>();
 
         if (_animator == null)
         {
-            Debug.LogError($"[Monster PlayerCharacter] Animator component not found!");
+            Debug.LogError($"[Monster] Animator component not found!");
+        }
+        
+        _navMeshAgent = GetComponent<NavMeshAgent>();
+
+        if (_navMeshAgent == null)
+        {
+            Debug.LogError($"[Monster] NavMesh agent component not found!");
         }
 
         // Character 기본값 초기화

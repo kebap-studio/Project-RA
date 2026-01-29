@@ -28,6 +28,8 @@ public class MoveState : MonoBehaviour, IState
 
             return;
         }
+        _stateContenxt.GetAnimator().SetBool("IsMoving", true);
+        _stateContenxt.GetAnimator().SetFloat("MoveSpeed", 0.2f);
         StartCoroutine(UpdateState());
     }
 
@@ -45,7 +47,6 @@ public class MoveState : MonoBehaviour, IState
                 if (_navMeshAgent != null && _navMeshAgent.isOnNavMesh)
                     _navMeshAgent.SetDestination(nextPoint);
             }
-
             yield return null;
         }
     }
