@@ -1,59 +1,4 @@
-﻿// =========================
-// 컴파일 에러 안나는 기존 코드
-// =========================
-
-/* using UnityEngine;
-using UnityEngine.Serialization;
-
-public class GameManager : MonoBehaviour
-{
-    private static GameManager Instance { get; set; }
-
-    [Header("Game State")]
-    [SerializeField] private bool isPaused = false;
-
-    [Header("References")]
-    [SerializeField] private PlayerController player;
-    [SerializeField] private CameraController cameraController;
-
-    private void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-            InitializeGame();
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-
-    private void InitializeGame()
-    {
-        Debug.Log("Game Initialized!");
-    }
-
-
-    public void PauseGame()
-    {
-        isPaused = true;
-        Time.timeScale = 0f;
-    }
-
-    public void ResumeGame()
-    {
-        isPaused = false;
-        Time.timeScale = 1f;
-    }
-
-    public bool IsPaused() => isPaused;
-} */
-
-// 새 코드 시작
-
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
@@ -105,6 +50,10 @@ public class GameManager : MonoBehaviour
         if (playerObject == null)
             playerObject = FindFirstObjectByType<PlayerCharacter>();
 
+        // 카메라가 인스펙터에 안 들어갔으면 씬에서 찾아보기
+        if (cameraController == null)
+            cameraController = FindFirstObjectByType<CameraController>();
+
         // 플레이어 첫 스폰
         SpawnPlayer();
 
@@ -124,10 +73,10 @@ public class GameManager : MonoBehaviour
         if (isPaused) return;
 
         // 죽었으면 게임 종료(게임 오버)
-        if (playerObject != null && playerObject.GetCurrentHp() <= 0)
-        {
-            EndGameDead();
-        }
+        // if (playerObject != null && playerObject.GetCurrentHp() <= 0)
+        // {
+        //     EndGameDead();
+        // }
     }
 
     public void PauseGame()
@@ -238,37 +187,49 @@ public class GameManager : MonoBehaviour
 
     private void SpawnPlayer() // 플레이어 첫 생성
     {
-        if (playerObject == null) {
+        if (playerObject == null)
+        {
             Debug.Log("Need playerObject to spawn Player.");
             return;
         }
 
         Vector3 pos = GetRandomPositionInMap();
         GameObject player = Instantiate(playerObject, pos, Quaternion.identity).gameObject;
-        if (player != null){
+        if (player != null)
+        {
             player.GetComponent<PlayerCharacter>().OnDeath += EndGameDead;
+
+            // 카메라 타겟 설정
+            if (cameraController != null)
+                cameraController.SetTarget(player.transform);
         }
-        else {
+        else
+        {
             Debug.Log("Player Spawn Failed!");
         }
     }
 
-    private void RespawnPlayer(){ // 플레이어 리스폰
+    private void RespawnPlayer()
+    {
+        // 플레이어 리스폰
     }
 
     private void SpawnEnemy()
     {
-        if (enemyPrefab == null) {
+        if (enemyPrefab == null)
+        {
             Debug.Log("Need enemyPrefab to spawn Enemy.");
             return;
         }
 
         Vector3 pos = GetRandomPositionInMap();
         GameObject enemy = Instantiate(enemyPrefab, pos, Quaternion.identity);
-        if (enemy != null){
+        if (enemy != null)
+        {
             enemy.GetComponent<MonsterCharacter>().OnDeath += RegisterMonsterKilled;
         }
-        else {
+        else
+        {
             Debug.Log("Enemy Spawn Failed!");
         }
     }
@@ -280,7 +241,7 @@ public class GameManager : MonoBehaviour
         float z = Random.Range(-mapHalfSize.y, mapHalfSize.y);
         return new Vector3(x, spawnY, z);
     }
-    
+
     // 임시 함수 
     private void HandlePlayerDead()
     {

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -19,7 +18,7 @@ public class RayAttack : MonoBehaviour
     
     void Start()
     {
-        Assert.IsTrue(points.Count > 0);
+        Debug.Assert(points.Count > 0, "[RayAttack] points list is empty!");
         for (int i = 0; i < points.Count; i++)
         {
             _prePoints.Add(points[i].position);

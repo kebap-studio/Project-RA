@@ -1,4 +1,3 @@
-using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -23,7 +22,7 @@ public class SpringArm : MonoBehaviour
     {
         if (camera == null)
             camera = GetComponent<Camera>();
-        Assert.IsNotNull(camera);
+        Debug.Assert(camera != null, "[SpringArm] Camera component is null!");
         UpdateCameraPoision();
         Cursor.lockState = CursorLockMode.Locked;
         
