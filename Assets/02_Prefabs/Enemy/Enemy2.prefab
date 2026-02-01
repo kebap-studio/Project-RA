@@ -78,6 +78,7 @@ GameObject:
   - component: {fileID: 2507843658717127339}
   - component: {fileID: 6759388051066650270}
   - component: {fileID: 7885413508684063602}
+  - component: {fileID: 6737623118589571196}
   m_Layer: 0
   m_Name: Enemy2
   m_TagString: Untagged
@@ -172,7 +173,7 @@ MonoBehaviour:
   idleState: {fileID: 2507843658717127339}
   moveState: {fileID: 6759388051066650270}
   chaseState: {fileID: 7885413508684063602}
-  _animator: {fileID: 0}
+  attackState: {fileID: 6737623118589571196}
 --- !u!114 &2507843658717127339
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -209,6 +210,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 179bf709c0cfacd47a45642a85891177, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &6737623118589571196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5393896136828068408}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e55051342ca24a249a9704ab514ec741, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attackTime: 1
+  attackPrefab: {fileID: 3369982384546291564, guid: 5294a5f6bc88bdd45b4804a73a71bded, type: 3}
 --- !u!1001 &4304307168647610369
 PrefabInstance:
   m_ObjectHideFlags: 0
