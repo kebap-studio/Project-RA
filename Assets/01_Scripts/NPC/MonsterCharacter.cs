@@ -12,75 +12,74 @@ using Random = UnityEngine.Random;
 public class MonsterCharacter : Character
 {
     #region 기본 몬스터 - 1 스탯 설정
-    
+
     [Header("=== Monster-1 Character Stats ===")]
     [SerializeField] private float baseSpeed = 3.5f;
     [SerializeField] private float sprintMultiplier = 1.8f;
     [SerializeField] private float rotationSpeed = 12f;
-    
+
     [Header("Combat Settings")]
     [SerializeField] private float attackRange = 2.5f;
     [SerializeField] private float attackCooldown = 0.8f;
-    
+
     [Header("Monster State")]
     private MonsterStateContext stateContext;
     [SerializeField] private IdleState idleState;
     [SerializeField] private MoveState moveState;
     [SerializeField] private ChaseState chaseState;
+    [SerializeField] private AttackState attackState;
     private IState _currentState;
-    
+
     #endregion
 
     #region Components
-    
-    [SerializeField] private Animator _animator;
+
     private NavMeshAgent _navMeshAgent;
-    
+
     #endregion
 
     #region Movement & State
-    
+
     private Vector3 _currentVelocity;
     private Vector3 _targetPosition;
     private bool _isMovingToTarget;
     private bool _isSprinting;
     private bool _isAttacking;
     private float _lastAttackTime;
-    
-    #endregion
 
-    #region Animation Parameter IDs (Monster Animator와 동기화)
-    
-    private int _animIDSpeed;           // 이동 속도 (0-1)
-    private int _animIDIsMoving;        // 이동 중 여부
-    private int _animIDAttack;          // 공격 트리거
-    private int _animIDIsSprinting;     // 스프린트 여부
-    
     #endregion
-
+    
     #region Unity Lifecycle
+
     private void Awake()
     {
         base.Awake();
         InitializeComponents();
-        CacheAnimationParameters();
         SetupDetials();
 
         // TODO : 만약 몹이 수백개 되면 최적화 고려
         stateContext = new MonsterStateContext(this);
-        // idleState = new IdleState();
-        // moveState = new MoveState();
-        // chaseState = new ChaseState();
         idleState.init(stateContext, () => UpdateState(moveState));
         moveState.init(stateContext);
-        chaseState.init(stateContext, () => {Debug.LogFormat("ATTCK !!!"); UpdateState(idleState);});
+        chaseState.init(stateContext,
+            () =>
+            {
+                Debug.LogFormat("추적상태 완료함수 람다식 사용할게요 !!!");
+                UpdateState(attackState);
+            });
+        attackState.init(stateContext,
+            () =>
+            {
+                Debug.LogFormat("공격완료상태 완료함수 람다식 사용할게요 !!!");
+                UpdateState(idleState);
+            });
         _currentState = idleState;
     }
 
     private void Start()
     {
         stateContext.Init(_currentState);
-        
+
         NavMeshAgent agent = GetComponent<NavMeshAgent>();
         if (agent != null)
         {
@@ -114,7 +113,7 @@ public class MonsterCharacter : Character
                 //     UpdateState(idleState);
                 // }
             }
-            else 
+            else
             {
                 // 이동 or idle
                 if (Random.Range(0, 5) == 0)
@@ -135,14 +134,21 @@ public class MonsterCharacter : Character
 
     private void LateUpdate()
     {
-        Vector3 dir = _navMeshAgent.steeringTarget - transform.position;
-        
-        // 예상 도착지점까지 오면 회전은 안해도 이상하지는 않음(사실상 그런 상황 없을듯)
-        if (dir.magnitude > 0.5f)
+        if (_navMeshAgent.hasPath && !_navMeshAgent.isStopped)
         {
-            Quaternion targetRotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir.normalized), Time.deltaTime * _navMeshAgent.angularSpeed);
-            transform.localRotation = targetRotation;
+            Vector3 dir = _navMeshAgent.steeringTarget - transform.position;
+            dir.y = 0;
+            
+            // 예상 도착지점까지 오면 회전은 안해도 이상하지는 않음(사실상 그런 상황 없을듯)
+            if (dir.magnitude > 0.1f)
+            {
+                Quaternion targetRotation = Quaternion.Slerp(transform.rotation,
+                    Quaternion.LookRotation(dir.normalized),
+                    Time.deltaTime * _navMeshAgent.angularSpeed);
+                transform.localRotation = targetRotation;
+            }
         }
+
     }
 
     #endregion
@@ -151,13 +157,6 @@ public class MonsterCharacter : Character
 
     private void InitializeComponents()
     {
-        _animator = GetComponentInChildren<Animator>();
-
-        if (_animator == null)
-        {
-            Debug.LogError($"[Monster] Animator component not found!");
-        }
-        
         _navMeshAgent = GetComponent<NavMeshAgent>();
 
         if (_navMeshAgent == null)
@@ -169,27 +168,17 @@ public class MonsterCharacter : Character
         moveSpeed = baseSpeed;
     }
 
-    private void CacheAnimationParameters()
-    {
-        // Monster Animator의 파라미터명과 동일하게 설정
-        _animIDSpeed = Animator.StringToHash("Speed");
-        _animIDIsMoving = Animator.StringToHash("IsMoving");
-        _animIDAttack = Animator.StringToHash("Attack");
-        _animIDIsSprinting = Animator.StringToHash("IsSprinting");
-
-        Debug.Log($"[Monster PlayerCharacter] Animation parameters cached");
-    }
-
     private void SetupDetials()
     {
         // Monster 캐릭터 고유 설정
         maxHealth = 150f;
         attackPower = 15f;
-        
+
         // 테그 설정 (필요시)
         // gameObject.tag = "Monster";
-        
-        Debug.Log($"[Monster PlayerCharacter] Initialized - Health: {maxHealth}, Speed: {baseSpeed}, Attack Power: {attackPower}");
+
+        Debug.Log(
+            $"[Monster PlayerCharacter] Initialized - Health: {maxHealth}, Speed: {baseSpeed}, Attack Power: {attackPower}");
     }
 
     #endregion
@@ -200,7 +189,7 @@ public class MonsterCharacter : Character
     {
         if (state == null)
         {
-            
+
             return;
         }
 

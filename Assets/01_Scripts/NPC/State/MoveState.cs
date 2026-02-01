@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -28,8 +27,8 @@ public class MoveState : MonoBehaviour, IState
 
             return;
         }
-        _stateContenxt.GetAnimator().SetBool("IsMoving", true);
-        _stateContenxt.GetAnimator().SetFloat("MoveSpeed", 0.2f);
+        _stateContenxt.GetAnimator().SetFloat(NPCAnimHashID.Instance.MoveSpeed, 0.2f);
+        _stateContenxt.GetAnimator().SetBool(NPCAnimHashID.Instance.IsMoving, true);
         StartCoroutine(UpdateState());
     }
 
