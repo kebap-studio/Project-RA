@@ -31,6 +31,10 @@ public class ObjectPoolManager : Singleton<ObjectPoolManager>
             
             Debug.Log($"[{prefab.name}] Create Prefab ObjectPool: {key}");
         }
+        else
+        {
+            Debug.Log($"[{prefab.name}] Pop Prefab ObjectPool");
+        }
         
         return ((ObjectPool<T>)_pools[prefab.GetInstanceID()]).Get();
     }
@@ -46,6 +50,7 @@ public class ObjectPoolManager : Singleton<ObjectPoolManager>
         if (_pools.ContainsKey(key))
         {
             ((ObjectPool<T>)_pools[key]).Release(prefab);
+            prefab.transform.SetParent(null, false);
         }
     }
 }
