@@ -64,6 +64,11 @@ public class CollisionAttack : MonoBehaviour, IAttack, IPoolable
                     // 어택 성공
                     // 이벤트를 호출시켜야 되는데.. 캐스팅 없이 안되는 거겠지....
                     Debug.Log($"공격 성공 {col.gameObject.GetInstanceID()} !!!!");
+                    Character character = col.gameObject.GetComponent<Character>();
+                    if (character != null)
+                    {
+                        character.TakeDamage(0);
+                    }
                 }
                 trigger = true;
             }

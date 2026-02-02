@@ -52,10 +52,10 @@ public class AttackState : MonoBehaviour, IState
                 _stateContenxt.GetAnimator().SetInteger(NPCAnimHashID.Instance.MotionNum, 1);
                 // attack 콜리전 생성
                 _isCollision = true;
-                CollisionAttack skillComponent = ObjectPoolManager.Instance.Pop(attackPrefab);
-                if (skillComponent is IAttack attack)
+                CollisionAttack collisionAttack = ObjectPoolManager.Instance.Pop(attackPrefab);
+                if (collisionAttack is IAttack attack)
                 {
-                    skillComponent.transform.SetParent(transform, false);
+                    collisionAttack.transform.SetParent(transform, false);
                     attack.Restart();
                 }
             }

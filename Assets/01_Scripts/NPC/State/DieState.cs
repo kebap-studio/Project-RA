@@ -32,8 +32,13 @@ public class DieState : MonoBehaviour, IState
 
     public IEnumerator UpdateState()
     {
-        // 사망 애니메이션 실행을 위해 잠깐 정지 시킨다.
-        yield return new WaitForSeconds(1.0f);
+        _stateContenxt.GetAnimator().SetBool(NPCAnimHashID.Instance.IsMoving, false);
+        _stateContenxt.GetAnimator().SetBool(NPCAnimHashID.Instance.IsAttack, true);
+        
+        // Die 애니메이션으로 전환 2번
+        _stateContenxt.GetAnimator().SetInteger(NPCAnimHashID.Instance.MotionNum, 4);
+        float duration = _stateContenxt.GetAnimator().GetCurrentAnimatorStateInfo(0).length;
+        yield return new WaitForSeconds(duration);
         onFinished?.Invoke();
     }
 
