@@ -22,6 +22,11 @@ public class PlayerCharacter : Character
     [SerializeField] private float attackRange = 2.5f;
     [SerializeField] private float attackCooldown = 0.8f;
 
+    [Header("Gravity Settings")]
+    [SerializeField] private float gravity = -9.81f;
+    [SerializeField] private float groundCheckDistance = 0.2f;
+    [SerializeField] private LayerMask groundLayer = -1;
+
     [Header("Inventory")]
     [SerializeField] private List<Item> itemList = new List<Item>();
     
@@ -45,6 +50,8 @@ public class PlayerCharacter : Character
     private bool _isSprinting;
     private bool _isAttacking;
     private float _lastAttackTime;
+    private float _verticalVelocity;
+    private bool _isGrounded;
 
     #endregion
 
@@ -134,8 +141,14 @@ public class PlayerCharacter : Character
     /// </summary>
     public void Move(Vector3 direct)
     {
-        // 공격 중이거나 클릭 이동 중일 때는 입력 무시
-        if (_isAttacking || _isMovingToTarget)
+        // 공격 애니메이션이 끝났으면 공격 상태 해제
+        if (_isAttacking && IsAttackComplete())
+        {
+            _isAttacking = false;
+        }
+
+        // 공격 중일 때는 입력 무시 (짧은 시간만)
+        if (_isAttacking)
         {
             return;
         }
@@ -258,7 +271,21 @@ public class PlayerCharacter : Character
     {
         if (_characterController == null) return;
 
-        _characterController.Move(_currentVelocity * Time.deltaTime);
+        // 지면 체크
+        _isGrounded = _characterController.isGrounded;
+
+        // 지면에 있을 때 수직 속도 리셋
+        if (_isGrounded && _verticalVelocity < 0f)
+        {
+            _verticalVelocity = -2f; // 약간의 아래쪽 힘으로 지면에 붙어있게 함
+        }
+
+        // 중력 적용
+        _verticalVelocity += gravity * Time.deltaTime;
+
+        // 최종 이동 벡터 (수평 이동 + 수직 중력)
+        Vector3 finalMovement = _currentVelocity + new Vector3(0f, _verticalVelocity, 0f);
+        _characterController.Move(finalMovement * Time.deltaTime);
     }
 
     private void HandleTargetMovement()

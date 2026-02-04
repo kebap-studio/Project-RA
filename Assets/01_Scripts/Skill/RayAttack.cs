@@ -19,7 +19,7 @@ public class RayAttack : MonoBehaviour, IAttack, IPoolable
 
     void Start()
     {
-        Assert.IsTrue(points.Count > 0);
+        Debug.Assert(points.Count > 0, "[RayAttack] points list is empty!");
         for (int i = 0; i < points.Count; i++)
         {
             _prePoints.Add(points[i].position);
