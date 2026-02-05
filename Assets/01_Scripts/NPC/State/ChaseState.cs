@@ -9,6 +9,8 @@ public class ChaseState : MonoBehaviour, IState
     private AStateContext _stateContenxt;
     public Action onFinished;
 
+    int _moveSpeedhashID;
+
     public void init(AStateContext stateContext, Action func = null)
     {
         _stateContenxt = stateContext;
@@ -34,25 +36,33 @@ public class ChaseState : MonoBehaviour, IState
 
     public IEnumerator UpdateState()
     {
+        GameObject player = GameObject.FindWithTag("Player");
+        Vector3 nextPoint;
         while (true)
         {
-            // 플레이어 체크 : GameManager에서 변수로 등록해두면 바로 들고올수 있어 좋을거 같긴한다. readonly로
-            var player = GameObject.FindWithTag("Player");
-            var playerPosition = player.transform.position;
             Vector3 curPoint = _stateContenxt._current.transform.position;
+            Vector3 playerPosition = player.transform.position;
             
+            // 근처까지 도착
             if (Vector3.Distance(playerPosition, curPoint) < 2.0f)
             {
+                _stateContenxt.GetAnimator().SetFloat(NPCAnimHashID.Instance.MoveSpeed, 0.0f);
+                _stateContenxt.GetAnimator().SetBool(NPCAnimHashID.Instance.IsMoving, false);
+                
+                // 에이전트 정지 및 경로 초기화
+                _navMeshAgent.isStopped = true; 
+                _navMeshAgent.ResetPath();
+                
                 onFinished?.Invoke();
-                _navMeshAgent.SetDestination(curPoint);
                 yield break;
             }
-            else
-            {
-                _navMeshAgent.SetDestination(playerPosition);
-            }
-
-            yield return null;
+            
+            // 플레이어 추적 (값이 완전히 같으면 근처까지 도달이 안됨...)
+            nextPoint = playerPosition - (playerPosition - curPoint).normalized * (2.0f - 0.1f);
+            _navMeshAgent.SetDestination(nextPoint);
+            _stateContenxt.GetAnimator().SetFloat(NPCAnimHashID.Instance.MoveSpeed, 0.2f);
+            _stateContenxt.GetAnimator().SetBool(NPCAnimHashID.Instance.IsMoving, true);
+            yield return new WaitForSeconds(0.1f);
         }
     }
 

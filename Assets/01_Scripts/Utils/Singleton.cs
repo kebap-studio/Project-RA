@@ -1,7 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
@@ -14,7 +10,9 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
         {
             if (_instance == null)
             {
-                _instance = (T)FindObjectOfType(typeof(T));
+                _instance = (T) FindObjectOfType(typeof(T));
+
+                Debug.Log($"Singleton {typeof(T)} Created");
             }
             return _instance;
         }

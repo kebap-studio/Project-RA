@@ -5,10 +5,12 @@ public abstract class AStateContext
 {
     private IState _currentState;
     public readonly Character _current;
+    private Animator _animator;
 
     public AStateContext(Character current)
     {
         _current = current;
+        _animator = current.GetComponentInChildren<Animator>();
     }
 
     public virtual void Init(IState state)
@@ -21,7 +23,6 @@ public abstract class AStateContext
     {
         if (state == null)
         {
-
             return;    
         }
 
@@ -31,4 +32,5 @@ public abstract class AStateContext
     }
 
     public IState GetState() { return _currentState; }
+    public Animator GetAnimator() { return _animator; }
 }

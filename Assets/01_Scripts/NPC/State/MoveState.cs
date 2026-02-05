@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -28,6 +27,8 @@ public class MoveState : MonoBehaviour, IState
 
             return;
         }
+        _stateContenxt.GetAnimator().SetFloat(NPCAnimHashID.Instance.MoveSpeed, 0.2f);
+        _stateContenxt.GetAnimator().SetBool(NPCAnimHashID.Instance.IsMoving, true);
         StartCoroutine(UpdateState());
     }
 
@@ -45,7 +46,6 @@ public class MoveState : MonoBehaviour, IState
                 if (_navMeshAgent != null && _navMeshAgent.isOnNavMesh)
                     _navMeshAgent.SetDestination(nextPoint);
             }
-
             yield return null;
         }
     }

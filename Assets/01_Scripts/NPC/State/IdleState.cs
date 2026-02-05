@@ -33,7 +33,7 @@ public class IdleState : MonoBehaviour, IState
     public IEnumerator UpdateState()
     {
         // idle이면 애니메이션 실행을 위해 잠깐 정지 시킨다.
-        yield return new WaitForSeconds(1.0f);
+        yield return new WaitForSeconds(0.5f);
         onFinished?.Invoke();
     }
 
